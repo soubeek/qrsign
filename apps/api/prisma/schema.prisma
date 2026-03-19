@@ -141,8 +141,9 @@ model EmailConfig {
   smtpHost        String  @map("smtp_host")
   smtpPort        Int     @default(587) @map("smtp_port")
   smtpSecure      Boolean @default(false) @map("smtp_secure")
-  smtpUser        String  @map("smtp_user")
-  smtpPass        String  @map("smtp_pass")
+  smtpAuth        Boolean @default(true) @map("smtp_auth")
+  smtpUser        String  @default("") @map("smtp_user")
+  smtpPass        String  @default("") @map("smtp_pass")
   fromAddress     String  @map("from_address")
   fromName        String  @map("from_name")
 

@@ -12,8 +12,13 @@ export class UpsertEmailConfigDto {
   @IsOptional()
   smtpSecure?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  smtpAuth?: boolean;
+
   @IsString()
-  smtpUser: string;
+  @IsOptional()
+  smtpUser?: string;
 
   @IsString()
   @IsOptional()

@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Body } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, BadRequestException } from '@nestjs/common';
 import { EmailConfigService } from './email-config.service';
 import { EmailService } from './email.service';
 import { UpsertEmailConfigDto } from './dto/upsert-email-config.dto';
@@ -26,7 +26,11 @@ export class EmailConfigController {
   @Post('test')
   @Roles('SUPER_ADMIN', 'ADMIN')
   async sendTest(@Body('toAddress') toAddress: string) {
-    await this.emailService.sendTest(toAddress);
-    return { success: true, message: 'Email de test envoye' };
+    try {
+      await this.emailService.sendTest(toAddress);
+      return { success: true, message: 'Email de test envoye' };
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
   }
 }

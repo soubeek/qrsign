@@ -13,7 +13,7 @@ import api from '../lib/axios'
 
 const router = useRouter()
 const toast = useToast()
-const form = ref<any>({ smtpHost: '', smtpPort: 587, smtpSecure: false, smtpUser: '', smtpPass: '', fromAddress: '', fromName: '', autoSendOnSign: false, allowManualSend: true, subject: 'Votre document signe', bodyTemplate: '' })
+const form = ref<any>({ smtpHost: '', smtpPort: 587, smtpSecure: false, smtpAuth: true, smtpUser: '', smtpPass: '', fromAddress: '', fromName: '', autoSendOnSign: false, allowManualSend: true, subject: 'Votre document signe', bodyTemplate: '' })
 const showTest = ref(false)
 const testAddress = ref('')
 
@@ -56,10 +56,15 @@ function insertVar(v: string) { form.value.bodyTemplate += v }
       <div class="grid grid-cols-2 gap-4">
         <div><label class="text-sm font-medium">Hote SMTP</label><InputText v-model="form.smtpHost" class="w-full mt-1" /></div>
         <div><label class="text-sm font-medium">Port</label><InputNumber v-model="form.smtpPort" class="w-full mt-1" /></div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2"><ToggleSwitch v-model="form.smtpSecure" /><span class="text-sm">Connexion securisee (SSL/TLS)</span></div>
+        <div class="flex items-center gap-2"><ToggleSwitch v-model="form.smtpAuth" /><span class="text-sm">Authentification SMTP</span></div>
+      </div>
+      <div v-if="form.smtpAuth" class="grid grid-cols-2 gap-4">
         <div><label class="text-sm font-medium">Utilisateur</label><InputText v-model="form.smtpUser" class="w-full mt-1" /></div>
         <div><label class="text-sm font-medium">Mot de passe</label><Password v-model="form.smtpPass" :feedback="false" toggleMask class="w-full mt-1" inputClass="w-full" /></div>
       </div>
-      <div class="flex items-center gap-2"><ToggleSwitch v-model="form.smtpSecure" /><span class="text-sm">Connexion securisee (SSL/TLS)</span></div>
       <div class="grid grid-cols-2 gap-4">
         <div><label class="text-sm font-medium">Adresse expediteur</label><InputText v-model="form.fromAddress" class="w-full mt-1" /></div>
         <div><label class="text-sm font-medium">Nom expediteur</label><InputText v-model="form.fromName" class="w-full mt-1" /></div>

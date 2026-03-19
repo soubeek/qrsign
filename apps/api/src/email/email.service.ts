@@ -29,22 +29,32 @@ export class EmailService {
   }
 
   decrypt(text: string): string {
-    const [ivHex, encrypted] = text.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const key = Buffer.from(this.encryptionKey, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+    if (!text || !text.includes(':')) return text; // Not encrypted, return as-is
+    try {
+      const [ivHex, encrypted] = text.split(':');
+      const iv = Buffer.from(ivHex, 'hex');
+      const key = Buffer.from(this.encryptionKey, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch {
+      return text; // Fallback: return raw value if decryption fails
+    }
   }
 
   private async createTransport(emailConfig: any) {
-    const pass = this.decrypt(emailConfig.smtpPass);
-    return nodemailer.createTransport({
+    const options: any = {
       host: emailConfig.smtpHost,
       port: emailConfig.smtpPort,
       secure: emailConfig.smtpSecure,
-      auth: { user: emailConfig.smtpUser, pass },
+    };
+    // Only add auth if smtpAuth is enabled
+    if (emailConfig.smtpAuth !== false && emailConfig.smtpUser) {
+      options.auth = { user: emailConfig.smtpUser, pass: this.decrypt(emailConfig.smtpPass || '') };
+    }
+    return nodemailer.createTransport({
+      ...options,
     });
   }
 
@@ -135,14 +145,24 @@ export class EmailService {
 
   async sendTest(toAddress: string): Promise<void> {
     const emailConfig = await this.prisma.emailConfig.findFirst();
-    if (!emailConfig) throw new Error('Email not configured');
+    if (!emailConfig) throw new Error('Email non configure. Sauvegardez d\'abord la configuration SMTP.');
 
-    const transport = await this.createTransport(emailConfig);
-    await transport.sendMail({
-      from: `"${emailConfig.fromName}" <${emailConfig.fromAddress}>`,
-      to: toAddress,
-      subject: `[TEST] ${emailConfig.subject}`,
-      html: '<h1>Email de test</h1><p>La configuration SMTP est fonctionnelle.</p>',
-    });
+    let transport;
+    try {
+      transport = await this.createTransport(emailConfig);
+    } catch (e) {
+      throw new Error('Erreur de configuration SMTP. Verifiez le mot de passe et re-sauvegardez la configuration.');
+    }
+
+    try {
+      await transport.sendMail({
+        from: `"${emailConfig.fromName}" <${emailConfig.fromAddress}>`,
+        to: toAddress,
+        subject: `[TEST] ${emailConfig.subject}`,
+        html: '<h1>Email de test</h1><p>La configuration SMTP est fonctionnelle.</p>',
+      });
+    } catch (e: any) {
+      throw new Error(`Erreur SMTP : ${e.message}`);
+    }
   }
 }
