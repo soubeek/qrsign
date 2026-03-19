@@ -48,14 +48,12 @@ export class EmailService {
       host: emailConfig.smtpHost,
       port: emailConfig.smtpPort,
       secure: emailConfig.smtpSecure,
+      tls: { rejectUnauthorized: emailConfig.smtpRejectUnauthorized !== false ? false : true },
     };
-    // Only add auth if smtpAuth is enabled
     if (emailConfig.smtpAuth !== false && emailConfig.smtpUser) {
       options.auth = { user: emailConfig.smtpUser, pass: this.decrypt(emailConfig.smtpPass || '') };
     }
-    return nodemailer.createTransport({
-      ...options,
-    });
+    return nodemailer.createTransport(options);
   }
 
   async sendSignedDocument(participantId: string): Promise<void> {
