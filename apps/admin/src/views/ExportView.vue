@@ -3,15 +3,14 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Button from 'primevue/button'
 import { useToast } from 'primevue/usetoast'
+import { useAuthStore } from '../stores/auth.store'
 import api from '../lib/axios'
 
 const route = useRoute()
 const toast = useToast()
+const auth = useAuthStore()
 const slug = route.params.slug as string
 const stats = ref<any>(null)
-const isDownloadingCsv = ref(false)
-const isDownloadingPdfs = ref(false)
-const isDownloadingBadges = ref(false)
 
 onMounted(async () => {
   try {
@@ -20,59 +19,15 @@ onMounted(async () => {
   } catch {}
 })
 
-async function downloadCsv() {
-  isDownloadingCsv.value = true
-  try {
-    const res = await api.get(`/events/${slug}/export/csv`, { responseType: 'blob' })
-    const url = URL.createObjectURL(res.data)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${slug}_export.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast.add({ severity: 'success', summary: 'CSV telecharge', life: 2000 })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Erreur de telechargement', life: 3000 })
-  } finally {
-    isDownloadingCsv.value = false
-  }
+function directDownload(path: string) {
+  // Open direct link with token in query param — browser handles streaming natively
+  const url = `/api${path}?token=${auth.accessToken}`
+  window.open(url, '_blank')
 }
 
-async function downloadPdfs() {
-  isDownloadingPdfs.value = true
-  try {
-    const res = await api.get(`/events/${slug}/export/pdfs`, { responseType: 'blob' })
-    const url = URL.createObjectURL(res.data)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${slug}_pdfs.zip`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast.add({ severity: 'success', summary: 'ZIP telecharge', life: 2000 })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Erreur de telechargement', life: 3000 })
-  } finally {
-    isDownloadingPdfs.value = false
-  }
-}
-
-async function downloadBadges() {
-  isDownloadingBadges.value = true
-  try {
-    const res = await api.get(`/events/${slug}/participants/badges`, { responseType: 'blob' })
-    const url = URL.createObjectURL(res.data)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${slug}_badges.pdf`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast.add({ severity: 'success', summary: 'Badges telecharges', life: 2000 })
-  } catch {
-    toast.add({ severity: 'error', summary: 'Erreur de telechargement', life: 3000 })
-  } finally {
-    isDownloadingBadges.value = false
-  }
-}
+function downloadCsv() { directDownload(`/events/${slug}/export/csv`) }
+function downloadPdfs() { directDownload(`/events/${slug}/export/pdfs`) }
+function downloadBadges() { directDownload(`/events/${slug}/participants/badges`) }
 </script>
 
 <template>
@@ -83,19 +38,19 @@ async function downloadBadges() {
         <i class="pi pi-file text-4xl text-blue-600 mb-3"></i>
         <h2 class="font-semibold mb-2">Export CSV</h2>
         <p class="text-sm text-gray-500 mb-4">Tous les participants</p>
-        <Button label="Telecharger" icon="pi pi-download" :loading="isDownloadingCsv" @click="downloadCsv" />
+        <Button label="Telecharger" icon="pi pi-download" @click="downloadCsv" />
       </div>
       <div class="bg-white rounded-xl shadow p-6 text-center">
         <i class="pi pi-qrcode text-4xl text-purple-600 mb-3"></i>
         <h2 class="font-semibold mb-2">Badges QR</h2>
         <p class="text-sm text-gray-500 mb-4">PDF avec QR codes pour impression</p>
-        <Button label="Telecharger" icon="pi pi-download" severity="help" :loading="isDownloadingBadges" @click="downloadBadges" />
+        <Button label="Telecharger" icon="pi pi-download" severity="help" @click="downloadBadges" />
       </div>
       <div class="bg-white rounded-xl shadow p-6 text-center">
         <i class="pi pi-file-pdf text-4xl text-red-600 mb-3"></i>
         <h2 class="font-semibold mb-2">Export PDFs</h2>
         <p class="text-sm text-gray-500 mb-4">Archive ZIP des documents signes</p>
-        <Button label="Telecharger" icon="pi pi-download" severity="secondary" :loading="isDownloadingPdfs" @click="downloadPdfs" />
+        <Button label="Telecharger" icon="pi pi-download" severity="secondary" @click="downloadPdfs" />
       </div>
       <div v-if="stats" class="bg-white rounded-xl shadow p-6">
         <h2 class="font-semibold mb-4">Statistiques</h2>
