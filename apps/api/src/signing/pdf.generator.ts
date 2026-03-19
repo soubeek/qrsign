@@ -78,42 +78,97 @@ export class PdfGenerator {
       return map[ch] || '';
     });
 
+    // Render a line with inline **bold** and *italic* markdown
+    const drawFormattedLine = (rawLine: string, size: number, xStart: number, align: string, baseFont = font) => {
+      // Strip markdown for width calculation, then render segments
+      const plainText = rawLine.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+      const lineWidth = baseFont.widthOfTextAtSize(plainText, size);
+      const maxWidth = width - 2 * margin;
+
+      // Alignment
+      let x: number;
+      if (align === 'center') x = margin + (maxWidth - lineWidth) / 2;
+      else if (align === 'right') x = width - margin - lineWidth;
+      else x = xStart; // left or justify (justify uses left for now)
+
+      // Parse segments: **bold**, *italic*, plain
+      const segments: { text: string; bold: boolean; italic: boolean }[] = [];
+      let remaining = rawLine;
+      while (remaining.length > 0) {
+        const boldMatch = remaining.match(/^\*\*(.+?)\*\*/);
+        const italicMatch = remaining.match(/^\*(.+?)\*/);
+        if (boldMatch) {
+          segments.push({ text: boldMatch[1], bold: true, italic: false });
+          remaining = remaining.slice(boldMatch[0].length);
+        } else if (italicMatch && !remaining.startsWith('**')) {
+          segments.push({ text: italicMatch[1], bold: false, italic: true });
+          remaining = remaining.slice(italicMatch[0].length);
+        } else {
+          // Plain text until next marker
+          const nextMarker = remaining.slice(1).search(/\*/);
+          const chunk = nextMarker === -1 ? remaining : remaining.slice(0, nextMarker + 1);
+          segments.push({ text: chunk, bold: false, italic: false });
+          remaining = remaining.slice(chunk.length);
+        }
+      }
+
+      addNewPageIfNeeded(size + 4);
+      for (const seg of segments) {
+        const segFont = seg.bold ? fontBold : baseFont;
+        const segText = sanitize(seg.text);
+        page.drawText(segText, { x, y, size, font: segFont, color: rgb(0, 0, 0) });
+        x += segFont.widthOfTextAtSize(segText, size);
+      }
+      y -= size + 4;
+    };
+
     const drawText = (
       text: string,
       size: number,
       f = font,
       color = rgb(0, 0, 0),
+      align = 'left',
     ) => {
       const maxWidth = width - 2 * margin;
       const safeText = sanitize(text);
-      // Split by newlines first, then word-wrap each line
       const paragraphs = safeText.split(/\r?\n/);
       for (let pi = 0; pi < paragraphs.length; pi++) {
         const para = paragraphs[pi];
         if (para.trim() === '') {
-          // Empty line = paragraph spacing
           y -= size + 2;
           addNewPageIfNeeded(size + 4);
           continue;
         }
-        const words = para.split(' ');
+
+        // Bullet list support
+        const isBullet = para.match(/^[-*]\s+(.*)$/);
+        const bulletIndent = isBullet ? 15 : 0;
+        const lineText = isBullet ? isBullet[1] : para;
+        const lineMaxWidth = maxWidth - bulletIndent;
+
+        if (isBullet) {
+          addNewPageIfNeeded(size + 4);
+          page.drawText('\u2022', { x: margin + 4, y, size, font: f, color });
+        }
+
+        // Word wrap
+        const words = lineText.split(' ');
         let line = '';
+        let isFirstLine = true;
         for (const word of words) {
           const testLine = line ? `${line} ${word}` : word;
-          const testWidth = f.widthOfTextAtSize(testLine, size);
-          if (testWidth > maxWidth && line) {
-            addNewPageIfNeeded(size + 4);
-            page.drawText(line, { x: margin, y, size, font: f, color });
-            y -= size + 4;
+          const plainTest = testLine.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+          const testWidth = f.widthOfTextAtSize(plainTest, size);
+          if (testWidth > lineMaxWidth && line) {
+            drawFormattedLine(line, size, margin + bulletIndent, isFirstLine ? align : (align === 'center' ? 'center' : 'left'), f);
             line = word;
+            isFirstLine = false;
           } else {
             line = testLine;
           }
         }
         if (line) {
-          addNewPageIfNeeded(size + 4);
-          page.drawText(line, { x: margin, y, size, font: f, color });
-          y -= size + 4;
+          drawFormattedLine(line, size, margin + bulletIndent, align, f);
         }
       }
       y -= 4;
@@ -180,8 +235,9 @@ export class PdfGenerator {
       : JSON.parse(documentDef.noticeSections || '[]');
     for (const section of sections) {
       addNewPageIfNeeded(40);
-      if (section.title) drawText(section.title, 11, fontBold);
-      if (section.content) drawText(section.content, 9);
+      const sectionAlign = section.align || 'left';
+      if (section.title) drawText(section.title, 11, fontBold, rgb(0, 0, 0), sectionAlign);
+      if (section.content) drawText(section.content, 9, font, rgb(0, 0, 0), sectionAlign);
       y -= 8;
     }
 

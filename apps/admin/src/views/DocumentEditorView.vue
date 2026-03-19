@@ -36,6 +36,7 @@ const declCharCount = computed(() => doc.value?.declarationTemplate?.length || 0
 const activeSection = ref<number | null>(null)
 const activeInsertTarget = ref<'declaration' | number>('declaration')
 const declTextarea = ref<HTMLTextAreaElement | null>(null)
+const sectionRefs: Record<number, HTMLTextAreaElement> = {}
 
 // Logo/background previews
 const logoPreview = ref<string | null>(null)
@@ -169,10 +170,36 @@ async function previewPdf() {
 }
 
 // Notice sections management
-function addSection() { if (doc.value) { doc.value.noticeSections.push({ title: '', content: '' }); activeSection.value = doc.value.noticeSections.length - 1 } }
+function addSection() { if (doc.value) { doc.value.noticeSections.push({ title: '', content: '', align: 'left' }); activeSection.value = doc.value.noticeSections.length - 1 } }
 function removeSection(i: number) { doc.value?.noticeSections.splice(i, 1); if (activeSection.value === i) activeSection.value = null }
 function moveSectionUp(i: number) { if (i > 0 && doc.value) { const s = doc.value.noticeSections; [s[i], s[i-1]] = [s[i-1], s[i]]; activeSection.value = i - 1 } }
 function moveSectionDown(i: number) { if (doc.value && i < doc.value.noticeSections.length - 1) { const s = doc.value.noticeSections; [s[i], s[i+1]] = [s[i+1], s[i]]; activeSection.value = i + 1 } }
+
+function wrapSelection(sectionIndex: number, marker: string) {
+  const el = sectionRefs[sectionIndex]
+  if (!el) return
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const text = doc.value.noticeSections[sectionIndex].content || ''
+  const selected = text.substring(start, end)
+  if (selected) {
+    doc.value.noticeSections[sectionIndex].content = text.substring(0, start) + marker + selected + marker + text.substring(end)
+  } else {
+    doc.value.noticeSections[sectionIndex].content = text.substring(0, start) + marker + 'texte' + marker + text.substring(end)
+  }
+  requestAnimationFrame(() => { el.focus(); el.selectionStart = el.selectionEnd = start + marker.length + (selected || 'texte').length + marker.length })
+}
+
+function insertBullet(sectionIndex: number) {
+  const el = sectionRefs[sectionIndex]
+  const text = doc.value.noticeSections[sectionIndex].content || ''
+  const pos = el?.selectionStart ?? text.length
+  const before = text.substring(0, pos)
+  const after = text.substring(pos)
+  const prefix = before.endsWith('\n') || before === '' ? '' : '\n'
+  doc.value.noticeSections[sectionIndex].content = before + prefix + '- ' + after
+  requestAnimationFrame(() => { if (el) { el.focus(); el.selectionStart = el.selectionEnd = pos + prefix.length + 2 } })
+}
 
 function insertVariable(key: string) {
   if (!doc.value) return
@@ -351,10 +378,29 @@ watch(hasChanges, v => {
             </div>
             <div v-if="activeSection === i" class="p-3 space-y-2">
               <InputText v-model="s.title" placeholder="Titre" class="w-full" />
-              <div class="flex flex-wrap gap-1 mb-1">
+
+              <!-- Alignment -->
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">Alignement :</span>
+                <div class="flex gap-0.5">
+                  <button v-for="al in [{v:'left',icon:'pi-align-left'},{v:'center',icon:'pi-align-center'},{v:'right',icon:'pi-align-right'},{v:'justify',icon:'pi-align-justify'}]" :key="al.v"
+                    class="p-1.5 rounded border text-xs" :class="(s.align || 'left') === al.v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                    @click="s.align = al.v"
+                  ><i :class="'pi ' + al.icon"></i></button>
+                </div>
+              </div>
+
+              <!-- Formatting toolbar -->
+              <div class="flex flex-wrap items-center gap-1 border-b pb-2">
+                <button class="px-2 py-1 rounded text-xs font-bold border border-gray-300 hover:bg-gray-100" title="Gras" @click="wrapSelection(i, '**')">G</button>
+                <button class="px-2 py-1 rounded text-xs italic border border-gray-300 hover:bg-gray-100" title="Italique" @click="wrapSelection(i, '*')">I</button>
+                <button class="px-2 py-1 rounded text-xs border border-gray-300 hover:bg-gray-100" title="Liste a puces" @click="insertBullet(i)">- Liste</button>
+                <div class="w-px h-5 bg-gray-300 mx-1"></div>
                 <button v-for="f in fields" :key="f.key" class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-100" @click="activeInsertTarget=i; insertVariable(f.key)">{{"{"}}{{f.key}}{{"}"}}</button>
               </div>
-              <Textarea v-model="s.content" rows="3" class="w-full" placeholder="Contenu..." />
+
+              <textarea :ref="el => { if (el) sectionRefs[i] = el as HTMLTextAreaElement }" v-model="s.content" rows="5" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono" placeholder="Contenu... (utilisez **gras**, *italique*, - liste)" />
+              <div class="text-xs text-gray-400">{{ (s.content || '').length }} car. | **gras** *italique* - liste</div>
             </div>
           </div>
         </div>
