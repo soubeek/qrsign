@@ -9,6 +9,9 @@
     "build": "pnpm --filter @qrsign/api build && pnpm --filter @qrsign/public build && pnpm --filter @qrsign/admin build",
     "db:migrate": "pnpm --filter @qrsign/api prisma migrate dev",
     "db:seed": "pnpm --filter @qrsign/api prisma db seed",
-    "db:generate": "pnpm --filter @qrsign/api prisma generate"
+    "db:generate": "pnpm --filter @qrsign/api prisma generate",
+    "test": "pnpm --filter @qrsign/public test && pnpm --filter @qrsign/admin test",
+    "test:e2e": "pnpm --filter @qrsign/api exec jest --config test/jest-e2e.json --forceExit --detectOpenHandles",
+    "test:all": "pnpm test && pnpm test:e2e"
   }
 }

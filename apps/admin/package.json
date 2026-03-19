@@ -6,25 +6,32 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@primevue/themes": "^4.3.1",
+    "@tailwindcss/vite": "^4.0.0",
+    "@vueuse/core": "^12.4.0",
+    "axios": "^1.7.9",
+    "pinia": "^2.3.0",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.3.1",
+    "tailwindcss": "^4.0.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
-    "pinia": "^2.3.0",
-    "@vueuse/core": "^12.4.0",
-    "tailwindcss": "^4.0.0",
-    "@tailwindcss/vite": "^4.0.0",
-    "primevue": "^4.3.1",
-    "@primevue/themes": "^4.3.1",
-    "primeicons": "^7.0.0",
-    "vuedraggable": "^4.1.0",
-    "axios": "^1.7.9"
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@pinia/testing": "^1.0.3",
     "@vitejs/plugin-vue": "^5.2.1",
-    "vite": "^6.0.7",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.8.4",
+    "jsdom": "^29.0.0",
     "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^4.1.0",
     "vue-tsc": "^2.2.0"
   }
 }
