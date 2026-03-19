@@ -21,6 +21,7 @@ const searchQuery = ref('')
 const searchResults = ref<any[]>([])
 const isSearching = ref(false)
 const isProcessing = ref(false)
+const showSearch = ref(false)
 const errorBanner = ref<{ type: string; message: string; link?: string } | null>(null)
 const lastScanResult = ref<{ name: string; time: string; status: string } | null>(null)
 const barcodeBuffer = ref('')
@@ -48,7 +49,7 @@ function playBeep(f: number, d: number) {
 function playSuccess() { playBeep(880, 150); setTimeout(() => playBeep(1100, 200), 160) }
 function playError() { playBeep(300, 300) }
 function vibrate(p: number | number[]) { try { navigator.vibrate?.(p) } catch {} }
-function refocus() { if (hiddenInput.value) hiddenInput.value.focus() }
+function refocus() { if (hiddenInput.value && !showSearch.value) hiddenInput.value.focus() }
 
 async function stopScanner() {
   if (scannerRunning.value && scannerRef.value) {
@@ -56,11 +57,23 @@ async function stopScanner() {
   }
 }
 
-async function loadStats() {
-  try {
-    const s = await checkin.getStats()
-    stats.value = s
-  } catch {}
+async function loadStats() { try { stats.value = await checkin.getStats() } catch {} }
+
+function openSearch() {
+  showSearch.value = true
+  searchQuery.value = ''
+  searchResults.value = []
+  nextTick(() => {
+    const el = document.querySelector('#search-overlay input') as HTMLInputElement
+    el?.focus()
+  })
+}
+
+function closeSearch() {
+  showSearch.value = false
+  searchQuery.value = ''
+  searchResults.value = []
+  refocus()
 }
 
 async function handleScan(qrCode: string) {
@@ -83,8 +96,7 @@ async function handleScan(qrCode: string) {
     }
     playSuccess(); vibrate(200)
     lastScanResult.value = { name, time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), status: 'PRESENT' }
-    await stopScanner()
-    loadStats()
+    await stopScanner(); loadStats()
     router.push(`/participant/${result.participant.id}`)
   } catch (err: any) {
     if (err?.response?.status === 404) {
@@ -100,12 +112,10 @@ async function handleScan(qrCode: string) {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  // Escape: clear search
-  if (e.key === 'Escape') { searchQuery.value = ''; searchResults.value = []; refocus(); return }
+  if (e.key === 'Escape') { if (showSearch.value) { closeSearch(); return } refocus(); return }
+  if (showSearch.value) return
   if (document.activeElement?.tagName === 'INPUT' && document.activeElement !== hiddenInput.value) return
-  if (e.key === 'Enter' && barcodeBuffer.value.length > 2) {
-    handleScan(barcodeBuffer.value.trim()); barcodeBuffer.value = ''; return
-  }
+  if (e.key === 'Enter' && barcodeBuffer.value.length > 2) { handleScan(barcodeBuffer.value.trim()); barcodeBuffer.value = ''; return }
   if (e.key.length === 1) {
     barcodeBuffer.value += e.key
     if (barcodeTimeout.value) clearTimeout(barcodeTimeout.value)
@@ -118,7 +128,7 @@ async function onSearch() {
   if (q.length < 2) { searchResults.value = []; return }
   isSearching.value = true
   try {
-    const result = await checkin.searchParticipants(q, 8)
+    const result = await checkin.searchParticipants(q, 10)
     searchResults.value = result.participants || []
     if (searchResults.value.length === 1) {
       autoSelectTimeout = setTimeout(() => selectParticipant(searchResults.value[0]), 600)
@@ -141,7 +151,7 @@ async function selectParticipant(p: any) {
     await checkin.loadParticipant(p.id)
     const data = p.data as Record<string, any>
     lastScanResult.value = { name: `${data['prenom'] || ''} ${(data['nom'] || '').toUpperCase()}`.trim(), time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), status: 'PRESENT' }
-    playSuccess(); vibrate(200); await stopScanner(); loadStats()
+    playSuccess(); vibrate(200); await stopScanner(); loadStats(); closeSearch()
     router.push(`/participant/${p.id}`)
   } catch { playError(); errorBanner.value = { type: 'info', message: 'Erreur de chargement' }; refocus() }
   finally { setTimeout(() => { isProcessing.value = false }, 500) }
@@ -155,7 +165,6 @@ function getDisplayName(data: Record<string, any>) {
 }
 function statusSeverity(s: string) { return s === 'ABSENT' ? 'secondary' : s === 'PRESENT' ? 'info' : 'success' }
 function statusLabel(s: string) { return s === 'ABSENT' ? 'Absent' : s === 'PRESENT' ? 'Present' : 'Present + Signe' }
-
 async function handleLogout() { await auth.logout(); router.push('/login') }
 
 onMounted(async () => {
@@ -167,8 +176,7 @@ onMounted(async () => {
       (text) => handleScan(text), () => {})
     scannerRunning.value = true
   } catch { cameraAvailable.value = false }
-  refocus()
-  loadStats()
+  refocus(); loadStats()
   clockInterval = setInterval(() => { clock.value = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }, 10000)
   statsInterval = setInterval(loadStats, 15000)
 })
@@ -185,34 +193,19 @@ onUnmounted(() => {
 
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col">
-    <!-- Header bar -->
-    <header class="bg-white shadow-sm border-b px-4 py-3">
-      <div class="max-w-6xl mx-auto flex items-center gap-4">
-        <div class="flex-1">
-          <h1 class="text-xl font-bold">{{ config.config?.app?.emoji }} {{ config.config?.app?.title }}</h1>
-          <p v-if="config.config?.app?.subtitle" class="text-xs text-gray-400">{{ config.config?.app?.subtitle }}</p>
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b px-4 py-3 sticky top-0 z-20">
+      <div class="max-w-6xl mx-auto flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <h1 class="text-lg font-bold truncate">{{ config.config?.app?.emoji }} {{ config.config?.app?.title }}</h1>
         </div>
-
-        <!-- Live stats -->
-        <div v-if="stats" class="hidden sm:flex items-center gap-4 text-sm">
-          <div class="text-center">
-            <div class="text-lg font-bold text-blue-600">{{ stats.present }}</div>
-            <div class="text-xs text-gray-400">Presents</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-green-600">{{ stats.signed }}</div>
-            <div class="text-xs text-gray-400">Signes</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-gray-400">{{ stats.total }}</div>
-            <div class="text-xs text-gray-400">Total</div>
-          </div>
+        <Button icon="pi pi-search" label="Rechercher" severity="secondary" size="small" @click="openSearch" />
+        <div v-if="stats" class="hidden sm:flex items-center gap-3 text-sm">
+          <div class="text-center px-2"><div class="text-lg font-bold text-blue-600">{{ stats.present }}</div><div class="text-xs text-gray-400">Presents</div></div>
+          <div class="text-center px-2"><div class="text-lg font-bold text-green-600">{{ stats.signed }}</div><div class="text-xs text-gray-400">Signes</div></div>
+          <div class="text-center px-2"><div class="text-lg font-bold text-gray-400">{{ stats.total }}</div><div class="text-xs text-gray-400">Total</div></div>
         </div>
-
-        <!-- Clock -->
-        <div class="text-2xl font-mono text-gray-300 hidden md:block">{{ clock }}</div>
-
-        <!-- Nav -->
+        <div class="text-xl font-mono text-gray-300 hidden md:block">{{ clock }}</div>
         <div class="flex gap-1">
           <Button icon="pi pi-chart-bar" severity="secondary" text size="small" title="Tableau de bord" @click="router.push('/')" />
           <Button icon="pi pi-sign-out" severity="secondary" text size="small" title="Deconnexion" @click="handleLogout" />
@@ -220,7 +213,7 @@ onUnmounted(() => {
       </div>
     </header>
 
-    <!-- Last scan result -->
+    <!-- Last scan banner -->
     <div v-if="lastScanResult" class="px-4 py-2" :class="lastScanResult.status === 'SIGNED' ? 'bg-amber-50' : 'bg-green-50'">
       <div class="max-w-6xl mx-auto flex items-center gap-2 text-sm">
         <i :class="lastScanResult.status === 'SIGNED' ? 'pi pi-exclamation-circle text-amber-600' : 'pi pi-check-circle text-green-600'"></i>
@@ -230,11 +223,9 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Processing / Error banners -->
+    <!-- Error/Processing -->
     <div v-if="isProcessing" class="px-4 py-2 bg-blue-50 border-b border-blue-200">
-      <div class="max-w-6xl mx-auto flex items-center gap-2 text-blue-700 text-sm">
-        <i class="pi pi-spin pi-spinner"></i> Traitement en cours...
-      </div>
+      <div class="max-w-6xl mx-auto flex items-center gap-2 text-blue-700 text-sm"><i class="pi pi-spin pi-spinner"></i> Traitement...</div>
     </div>
     <div v-if="errorBanner && !isProcessing" class="px-4 py-2 border-b" :class="{
       'bg-red-50 border-red-200 text-red-700': errorBanner.type === 'error',
@@ -242,81 +233,108 @@ onUnmounted(() => {
       'bg-gray-50 border-gray-200 text-gray-600': errorBanner.type === 'info',
     }">
       <div class="max-w-6xl mx-auto flex items-center justify-between text-sm">
-        <span>
-          {{ errorBanner.message }}
-          <router-link v-if="errorBanner.link" :to="errorBanner.link" class="underline ml-2">Voir la fiche</router-link>
-        </span>
+        <span>{{ errorBanner.message }} <router-link v-if="errorBanner.link" :to="errorBanner.link" class="underline ml-2">Voir</router-link></span>
         <button class="text-xs underline" @click="errorBanner = null; refocus()">Fermer</button>
       </div>
     </div>
 
-    <!-- Main content -->
-    <div class="flex-1 p-4">
-      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-6 h-full">
-        <!-- Left: QR Scanner (larger) -->
-        <div class="lg:col-span-3 bg-white rounded-xl shadow flex flex-col">
+    <!-- Scanner (full width, centered) -->
+    <div class="flex-1 flex items-center justify-center p-4">
+      <div class="w-full max-w-lg">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div class="p-4 border-b flex items-center gap-2">
-            <i class="pi pi-qrcode text-blue-600"></i>
-            <h2 class="font-semibold">Scanner un badge</h2>
+            <i class="pi pi-qrcode text-blue-600 text-xl"></i>
+            <h2 class="font-semibold text-lg">Scanner un badge</h2>
             <div v-if="scannerRunning" class="ml-auto flex items-center gap-1 text-xs text-green-600">
-              <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Camera active
+              <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Active
             </div>
           </div>
-          <div class="flex-1 p-4 flex items-center justify-center">
-            <div v-if="cameraAvailable" id="qr-reader" class="w-full max-w-md"></div>
-            <div v-else class="text-center text-gray-400 py-12">
-              <i class="pi pi-video text-4xl mb-3"></i>
-              <p>Camera non disponible</p>
-              <p class="text-sm mt-1">Utilisez un lecteur USB ou la recherche</p>
-            </div>
-          </div>
-          <input ref="hiddenInput" class="opacity-0 absolute -z-10" tabindex="-1" aria-hidden="true" />
-        </div>
-
-        <!-- Right: Search -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow flex flex-col">
-          <div class="p-4 border-b flex items-center gap-2">
-            <i class="pi pi-search text-blue-600"></i>
-            <h2 class="font-semibold">Recherche</h2>
-          </div>
-          <div class="p-4">
-            <InputText v-model="searchQuery" placeholder="Nom ou prenom..." class="w-full" @input="onSearchInput" />
-            <p class="text-xs text-gray-400 mt-1">Echap pour effacer</p>
-          </div>
-          <div class="flex-1 overflow-y-auto px-4 pb-4">
-            <div v-if="isSearching" class="text-gray-400 text-sm py-4 flex items-center gap-2 justify-center">
-              <i class="pi pi-spin pi-spinner"></i> Recherche...
-            </div>
-            <div v-else-if="searchResults.length > 0" class="space-y-2">
-              <div v-for="p in searchResults" :key="p.id"
-                class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer border border-gray-100 active:bg-blue-100 transition-colors"
-                @click="selectParticipant(p)"
-              >
-                <div class="w-10 h-10 rounded-full text-white flex items-center justify-center text-sm font-bold shrink-0"
-                  :class="p.status === 'SIGNED' ? 'bg-green-500' : p.status === 'PRESENT' ? 'bg-blue-500' : 'bg-gray-400'"
-                >
-                  {{ getInitials(p.data) }}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium truncate">{{ getDisplayName(p.data) }}</div>
-                  <div v-if="p.signatures?.length > 0" class="text-xs text-green-600">
-                    {{ p.signatures.length }} doc(s) signe(s)
-                  </div>
-                </div>
-                <Tag :value="statusLabel(p.status)" :severity="statusSeverity(p.status)" class="text-xs" />
-              </div>
-            </div>
-            <div v-else-if="searchQuery.length >= 2 && !isSearching" class="text-gray-400 text-sm text-center py-8">
-              <i class="pi pi-search text-2xl mb-2"></i>
-              <p>Aucun resultat</p>
-            </div>
-            <div v-else class="text-gray-300 text-sm text-center py-8">
-              <i class="pi pi-users text-3xl mb-2"></i>
-              <p>Saisissez un nom pour rechercher</p>
+          <div class="p-2">
+            <div v-if="cameraAvailable" id="qr-reader" class="w-full"></div>
+            <div v-else class="text-center text-gray-400 py-16">
+              <i class="pi pi-video text-5xl mb-4"></i>
+              <p class="text-lg">Camera non disponible</p>
+              <p class="text-sm mt-2">Utilisez un lecteur USB ou le bouton Rechercher</p>
             </div>
           </div>
         </div>
       </div>
+      <input ref="hiddenInput" class="opacity-0 absolute -z-10" tabindex="-1" aria-hidden="true" />
     </div>
+
+    <!-- Search overlay (slides up from bottom) -->
+    <Teleport to="body">
+      <Transition name="slide">
+        <div v-if="showSearch" class="fixed inset-0 z-50 flex flex-col" id="search-overlay">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-black/30" @click="closeSearch"></div>
+          <!-- Panel -->
+          <div class="relative mt-auto bg-white rounded-t-2xl shadow-2xl flex flex-col" style="max-height: 85vh;">
+            <!-- Handle -->
+            <div class="flex justify-center pt-3 pb-1"><div class="w-10 h-1 rounded-full bg-gray-300"></div></div>
+            <!-- Search bar -->
+            <div class="px-4 pb-3 flex items-center gap-3">
+              <i class="pi pi-search text-gray-400"></i>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Nom ou prenom..."
+                class="flex-1 text-lg outline-none bg-transparent"
+                @input="onSearchInput"
+                @keydown.escape="closeSearch"
+                autofocus
+              />
+              <button v-if="searchQuery" class="text-gray-400 hover:text-gray-600" @click="searchQuery = ''; searchResults = []">
+                <i class="pi pi-times"></i>
+              </button>
+              <button class="text-sm text-blue-600 font-medium" @click="closeSearch">Fermer</button>
+            </div>
+            <div class="border-t"></div>
+            <!-- Results -->
+            <div class="flex-1 overflow-y-auto">
+              <div v-if="isSearching" class="flex items-center justify-center py-12 text-gray-400">
+                <i class="pi pi-spin pi-spinner text-xl mr-3"></i> Recherche...
+              </div>
+              <div v-else-if="searchResults.length > 0" class="divide-y">
+                <div v-for="p in searchResults" :key="p.id"
+                  class="flex items-center gap-4 px-4 py-4 active:bg-blue-50 cursor-pointer"
+                  @click="selectParticipant(p)"
+                >
+                  <div class="w-12 h-12 rounded-full text-white flex items-center justify-center text-lg font-bold shrink-0"
+                    :class="p.status === 'SIGNED' ? 'bg-green-500' : p.status === 'PRESENT' ? 'bg-blue-500' : 'bg-gray-400'"
+                  >{{ getInitials(p.data) }}</div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-semibold">{{ getDisplayName(p.data) }}</div>
+                    <div v-if="p.data?.commune" class="text-sm text-gray-500">{{ p.data.commune }}</div>
+                  </div>
+                  <Tag :value="statusLabel(p.status)" :severity="statusSeverity(p.status)" class="text-xs" />
+                  <i class="pi pi-chevron-right text-gray-300"></i>
+                </div>
+              </div>
+              <div v-else-if="searchQuery.length >= 2 && !isSearching" class="text-center py-12 text-gray-400">
+                <i class="pi pi-search text-3xl mb-3"></i>
+                <p>Aucun resultat</p>
+              </div>
+              <div v-else class="text-center py-12 text-gray-300">
+                <i class="pi pi-users text-4xl mb-3"></i>
+                <p>Saisissez un nom</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.slide-enter-active, .slide-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-enter-from, .slide-leave-to {
+  opacity: 0;
+}
+.slide-enter-from > div:last-child, .slide-leave-to > div:last-child {
+  transform: translateY(100%);
+}
+</style>
