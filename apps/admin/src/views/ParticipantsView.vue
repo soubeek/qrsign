@@ -192,11 +192,12 @@ async function sendEmail(id: string) {
       :paginator="true" :rows="20" :rowsPerPageOptions="[10, 20, 50, 100]"
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
       currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+      sortMode="single"
     >
-      <Column v-for="f in displayFields" :key="f.key" :header="f.label" :sortable="true">
+      <Column v-for="f in displayFields" :key="f.key" :header="f.label" :sortable="true" :field="`data.${f.key}`">
         <template #body="{ data }">{{ data.data?.[f.key] || '' }}</template>
       </Column>
-      <Column header="Statut" :sortable="true" sortField="status">
+      <Column header="Statut" :sortable="true" field="status">
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
         </template>
