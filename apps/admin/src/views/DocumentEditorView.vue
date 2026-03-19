@@ -399,7 +399,7 @@ watch(hasChanges, v => {
                 <button v-for="f in fields" :key="f.key" class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-100" @click="activeInsertTarget=i; insertVariable(f.key)">{{"{"}}{{f.key}}{{"}"}}</button>
               </div>
 
-              <textarea :ref="el => { if (el) sectionRefs[i] = el as HTMLTextAreaElement }" v-model="s.content" rows="5" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono" placeholder="Contenu... (utilisez **gras**, *italique*, - liste)" />
+              <textarea :ref="el => { if (el) sectionRefs[i] = el as HTMLTextAreaElement }" v-model="s.content" rows="5" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono" :style="{ textAlign: s.align || 'left' }" placeholder="Contenu... (utilisez **gras**, *italique*, - liste)" />
               <div class="text-xs text-gray-400">{{ (s.content || '').length }} car. | **gras** *italique* - liste</div>
             </div>
           </div>
