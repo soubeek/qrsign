@@ -4,3 +4,8 @@ html, body {
   color: #1f2937;
   background-color: #f9fafb;
 }
+
+/* Disable double-tap zoom delay on touch devices */
+*, *::before, *::after {
+  touch-action: manipulation;
+}
