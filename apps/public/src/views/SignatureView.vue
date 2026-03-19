@@ -61,6 +61,37 @@ const declarationText = computed(() => {
   return replaceVars(currentDoc.value.declarationTemplate)
 })
 
+// Convert markdown-like syntax to HTML for display
+function formatContent(text: string, align?: string): string {
+  if (!text) return ''
+  let html = text
+    // Escape HTML
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // Bold: **text**
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic: *text*
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Bullet lists: lines starting with -
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul class="list-disc list-inside my-1">$1</ul>')
+  // Newlines to <br> (except inside <ul>)
+  html = html.replace(/\n/g, '<br>')
+  // Clean up <br> right after <ul> or before </ul>
+  html = html.replace(/<br><ul/g, '<ul').replace(/<\/ul><br>/g, '</ul>')
+  return html
+}
+
+function sectionStyle(section: any): string {
+  const align = section.align || 'left'
+  return `text-align: ${align};`
+}
+
+const declarationStyle = computed(() => {
+  const align = currentDoc.value?.declarationAlign || 'left'
+  return `text-align: ${align};`
+})
+
 function requestValidation() {
   if (isEmpty.value) { errorMsg.value = 'Veuillez signer avant de valider'; return }
   errorMsg.value = ''
@@ -138,14 +169,14 @@ onMounted(async () => {
         <div v-if="noticeSections.length > 0" class="bg-white rounded-xl shadow p-6 space-y-5">
           <div v-for="(section, i) in noticeSections" :key="i">
             <h3 class="font-semibold text-sm mb-2">{{ section.title }}</h3>
-            <p class="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{{ section.content }}</p>
+            <div class="text-sm text-gray-600 leading-relaxed" :style="sectionStyle(section)" v-html="formatContent(section.content, section.align)"></div>
           </div>
         </div>
 
         <!-- Declaration -->
         <div class="bg-blue-50 rounded-xl shadow p-6 border border-blue-200">
           <h3 class="font-semibold text-sm mb-3 text-blue-800">Declaration</h3>
-          <p class="text-sm whitespace-pre-line leading-relaxed">{{ declarationText }}</p>
+          <div class="text-sm leading-relaxed" :style="declarationStyle" v-html="formatContent(declarationText)"></div>
         </div>
 
         <!-- Signature pad -->
