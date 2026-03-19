@@ -148,7 +148,7 @@ onMounted(async () => {
         <!-- Actions -->
         <div class="flex flex-wrap gap-3">
           <Button v-if="!allSigned" label="Sauvegarder" icon="pi pi-check" :loading="isSaving" @click="save" />
-          <Button v-if="!allSigned" :label="`Signer les documents (${totalDocs - signedCount} restant${totalDocs - signedCount > 1 ? 's' : ''})`" icon="pi pi-pencil" severity="success" size="large" @click="router.push(`/signature/${participantId}`)" />
+          <Button v-if="!allSigned" :label="`${allDocs.find(d => !signedDocIds.includes(d.id))?.signingLabel || 'Signer'} (${totalDocs - signedCount} restant${totalDocs - signedCount > 1 ? 's' : ''})`" icon="pi pi-pencil" severity="success" size="large" @click="router.push(`/signature/${participantId}`)" />
           <Button v-if="allSigned && config.config?.email?.allowManualSend" label="Envoyer par e-mail" icon="pi pi-envelope" severity="secondary" @click="sendEmail" />
         </div>
 

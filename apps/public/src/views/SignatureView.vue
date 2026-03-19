@@ -155,7 +155,7 @@ onMounted(async () => {
           <div v-if="errorMsg" class="mt-3 p-2 bg-red-50 text-red-600 text-sm rounded">{{ errorMsg }}</div>
           <div class="mt-4 flex gap-3">
             <Button label="Effacer" icon="pi pi-trash" severity="secondary" outlined @click="clear" />
-            <Button :label="unsignedDocs.length > 1 ? 'Signer et passer au suivant' : 'Signer et terminer'"
+            <Button :label="unsignedDocs.length > 1 ? (currentDoc?.signingLabel || 'Signer') + ' et suivant' : currentDoc?.signingLabel || 'Signer et terminer'"
               icon="pi pi-check" severity="success" size="large"
               :loading="isSigning" :disabled="isEmpty" @click="requestValidation" class="flex-1" />
           </div>
