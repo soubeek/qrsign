@@ -192,8 +192,8 @@ onMounted(async () => {
           <div class="mt-4 flex gap-3">
             <Button label="Effacer" icon="pi pi-trash" severity="secondary" outlined @click="clear" />
             <Button :label="unsignedDocs.length > 1 ? (currentDoc?.signingLabel || 'Signer') + ' et suivant' : currentDoc?.signingLabel || 'Signer et terminer'"
-              icon="pi pi-check" severity="success" size="large"
-              :loading="isSigning" :disabled="isEmpty" @click="requestValidation" class="flex-1" />
+              icon="pi pi-check" :severity="isEmpty ? 'secondary' : 'success'" size="large"
+              :loading="isSigning" @click="requestValidation" class="flex-1" />
           </div>
         </div>
         <div class="h-4"></div>
