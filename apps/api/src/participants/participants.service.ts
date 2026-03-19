@@ -20,7 +20,7 @@ export class ParticipantsService {
     });
     if (!event) throw new NotFoundException('Event not found');
 
-    const limit = Math.min(params.limit || 20, 50);
+    const limit = Math.min(params.limit || 20, 500);
     const where: any = { eventId: event.id };
     if (params.status) where.status = params.status;
 

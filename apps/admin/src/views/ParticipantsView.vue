@@ -57,7 +57,7 @@ onMounted(async () => {
 async function loadParticipants() {
   // For "PRESENT" filter, load all and filter client-side (PRESENT includes SIGNED)
   const apiStatus = statusFilter.value === 'PRESENT' ? undefined : statusFilter.value
-  await participantsStore.fetchParticipants(slug, { search: search.value || undefined, status: apiStatus, limit: 50 })
+  await participantsStore.fetchParticipants(slug, { search: search.value || undefined, status: apiStatus, limit: 500 })
 }
 
 const filteredParticipants = computed(() => {
@@ -189,7 +189,9 @@ async function sendEmail(id: string) {
     <InputText v-model="search" placeholder="Rechercher..." class="w-full mb-4" @keyup.enter="onSearch" />
 
     <DataTable :value="filteredParticipants" :loading="participantsStore.isLoading" rowHover
-      :paginator="participantsStore.participants.length > 20" :rows="20"
+      :paginator="true" :rows="20" :rowsPerPageOptions="[10, 20, 50, 100]"
+      paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
+      currentPageReportTemplate="{first} - {last} sur {totalRecords}"
     >
       <Column v-for="f in displayFields" :key="f.key" :header="f.label" :sortable="true">
         <template #body="{ data }">{{ data.data?.[f.key] || '' }}</template>
