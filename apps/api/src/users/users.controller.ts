@@ -39,6 +39,12 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
+  @Post(':id/reset-password')
+  @Roles('SUPER_ADMIN')
+  resetPassword(@Param('id') id: string) {
+    return this.usersService.resetPassword(id);
+  }
+
   @Post(':id/events')
   @Roles('SUPER_ADMIN', 'ADMIN')
   assignEvent(@Param('id') id: string, @Body() dto: AssignUserEventDto) {

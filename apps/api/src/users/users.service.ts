@@ -113,6 +113,15 @@ export class UsersService {
     return { message: 'User deleted' };
   }
 
+  async resetPassword(id: string) {
+    await this.findOne(id);
+    // Generate a random temporary password
+    const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
+    await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+    return { message: 'Mot de passe reinitialise', tempPassword };
+  }
+
   async assignEvent(userId: string, dto: AssignUserEventDto) {
     await this.findOne(userId);
 

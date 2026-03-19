@@ -39,8 +39,10 @@ async function toggleActive(user: any) {
 }
 
 async function resetPassword(id: string) {
-  try { await api.post(`/users/${id}/reset-password`); toast.add({ severity: 'success', summary: 'Mot de passe réinitialisé', life: 3000 }) }
-  catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
+  try {
+    const { data } = await api.post(`/users/${id}/reset-password`)
+    toast.add({ severity: 'success', summary: `Nouveau mot de passe : ${data.tempPassword}`, life: 15000 })
+  } catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
 }
 
 function roleSeverity(role: string) {
