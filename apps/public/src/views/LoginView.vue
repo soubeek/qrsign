@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useConfigStore } from '@/stores/config.store'
-import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import api from '@/lib/axios'
@@ -13,18 +12,14 @@ const route = useRoute()
 const auth = useAuthStore()
 const configStore = useConfigStore()
 
-const email = ref(localStorage.getItem('qrsign_last_email') || '')
 const password = ref('')
 const errorMessage = ref('')
 const operators = ref<any[]>([])
 const selectedOperator = ref<any>(null)
-const isLoadingOperators = ref(false)
-const passwordInput = ref<any>(null)
+const isLoadingOperators = ref(true)
 
-// Load operators for quick select
 onMounted(async () => {
   const slug = configStore.slug || import.meta.env.VITE_EVENT_SLUG || 'conseil-municipal'
-  isLoadingOperators.value = true
   try {
     const { data } = await api.get(`/events/${slug}/operators`)
     operators.value = data || []
@@ -34,13 +29,18 @@ onMounted(async () => {
 
 function selectOperator(op: any) {
   selectedOperator.value = op
-  email.value = op.email
   password.value = ''
-  // Focus password field
+  errorMessage.value = ''
   setTimeout(() => {
     const input = document.querySelector('#password input') as HTMLInputElement
     input?.focus()
   }, 100)
+}
+
+function deselectOperator() {
+  selectedOperator.value = null
+  password.value = ''
+  errorMessage.value = ''
 }
 
 function getInitials(op: any): string {
@@ -49,7 +49,6 @@ function getInitials(op: any): string {
 
 function getRoleLabel(role: string): string {
   switch (role) {
-    case 'SUPER_ADMIN': return 'Administrateur'
     case 'ADMIN': return 'Gestionnaire'
     case 'OPERATOR': return 'Operateur'
     case 'VIEWER': return 'Observateur'
@@ -58,23 +57,21 @@ function getRoleLabel(role: string): string {
 }
 
 const roleColors: Record<string, string> = {
-  SUPER_ADMIN: 'bg-red-500',
   ADMIN: 'bg-amber-500',
   OPERATOR: 'bg-blue-500',
   VIEWER: 'bg-gray-400',
 }
 
 async function handleLogin() {
+  if (!selectedOperator.value) return
   errorMessage.value = ''
   try {
-    await auth.login(email.value, password.value)
-    localStorage.setItem('qrsign_last_email', email.value)
+    await auth.login(selectedOperator.value.email, password.value)
     await configStore.loadConfig()
     const redirect = (route.query.redirect as string) || '/scanner'
     router.push(redirect)
-  } catch (err: unknown) {
-    const axiosErr = err as { response?: { data?: { message?: string } } }
-    errorMessage.value = axiosErr.response?.data?.message || 'Identifiants incorrects'
+  } catch {
+    errorMessage.value = 'Mot de passe incorrect'
     password.value = ''
   }
 }
@@ -83,80 +80,90 @@ async function handleLogin() {
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
     <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-      <div class="text-center mb-6">
+      <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">QRSign</h1>
-        <p class="text-gray-500 mt-2">Connexion a l'espace d'accueil</p>
+        <p class="text-gray-500 mt-2">Qui etes-vous ?</p>
       </div>
 
-      <!-- Quick select operators -->
-      <div v-if="operators.length > 0" class="mb-6">
-        <p class="text-sm text-gray-500 mb-3">Connexion rapide</p>
-        <div class="grid grid-cols-2 gap-2">
+      <!-- Loading -->
+      <div v-if="isLoadingOperators" class="text-center py-8 text-gray-400">
+        <i class="pi pi-spin pi-spinner text-2xl"></i>
+      </div>
+
+      <!-- No operators -->
+      <div v-else-if="operators.length === 0" class="text-center py-8 text-gray-400">
+        <i class="pi pi-users text-3xl mb-3"></i>
+        <p>Aucun operateur assigne a cet evenement.</p>
+        <p class="text-sm mt-2">Contactez l'administrateur.</p>
+      </div>
+
+      <!-- Operator selection (no one selected yet) -->
+      <div v-else-if="!selectedOperator">
+        <div class="space-y-3">
           <button
             v-for="op in operators" :key="op.id"
-            class="flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left"
-            :class="selectedOperator?.id === op.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+            class="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all text-left"
             @click="selectOperator(op)"
           >
-            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+            <div class="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shrink-0"
               :class="roleColors[op.role] || 'bg-gray-400'"
             >
               {{ getInitials(op) }}
             </div>
-            <div class="min-w-0">
-              <div class="font-medium text-sm truncate">{{ op.firstName }} {{ op.lastName }}</div>
-              <div class="text-xs text-gray-400">{{ getRoleLabel(op.role) }}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-gray-800">{{ op.firstName }} {{ op.lastName }}</div>
+              <div class="text-sm text-gray-400">{{ getRoleLabel(op.role) }}</div>
             </div>
+            <i class="pi pi-chevron-right text-gray-300"></i>
           </button>
         </div>
       </div>
 
-      <div v-if="operators.length > 0" class="relative mb-4">
-        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
-        <div class="relative flex justify-center text-xs"><span class="px-2 bg-white text-gray-400">ou saisie manuelle</span></div>
+      <!-- Password entry (operator selected) -->
+      <div v-else>
+        <!-- Selected user header -->
+        <button class="w-full flex items-center gap-4 p-4 rounded-xl bg-blue-50 border-2 border-blue-500 mb-6 text-left" @click="deselectOperator">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shrink-0"
+            :class="roleColors[selectedOperator.role] || 'bg-gray-400'"
+          >
+            {{ getInitials(selectedOperator) }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-gray-800">{{ selectedOperator.firstName }} {{ selectedOperator.lastName }}</div>
+            <div class="text-sm text-gray-400">{{ getRoleLabel(selectedOperator.role) }}</div>
+          </div>
+          <span class="text-xs text-blue-500">Changer</span>
+        </button>
+
+        <form @submit.prevent="handleLogin">
+          <div class="mb-4">
+            <label for="password" class="text-sm font-medium text-gray-700 mb-2 block">Mot de passe</label>
+            <Password
+              id="password"
+              v-model="password"
+              :feedback="false"
+              toggleMask
+              inputClass="w-full"
+              class="w-full"
+              placeholder="Entrez votre mot de passe"
+              required
+            />
+          </div>
+
+          <div v-if="errorMessage" class="bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-4">
+            {{ errorMessage }}
+          </div>
+
+          <Button
+            type="submit"
+            label="Se connecter"
+            icon="pi pi-sign-in"
+            :loading="auth.isLoading"
+            :disabled="!password"
+            class="w-full"
+          />
+        </form>
       </div>
-
-      <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <label for="email" class="text-sm font-medium text-gray-700">Adresse e-mail</label>
-          <InputText
-            id="email"
-            v-model="email"
-            type="email"
-            placeholder="agent@mairie.fr"
-            class="w-full"
-            required
-            autocomplete="email"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="password" class="text-sm font-medium text-gray-700">Mot de passe</label>
-          <Password
-            id="password"
-            ref="passwordInput"
-            v-model="password"
-            :feedback="false"
-            toggleMask
-            inputClass="w-full"
-            class="w-full"
-            placeholder="Mot de passe"
-            required
-          />
-        </div>
-
-        <div v-if="errorMessage" class="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
-          {{ errorMessage }}
-        </div>
-
-        <Button
-          type="submit"
-          label="Se connecter"
-          icon="pi pi-sign-in"
-          :loading="auth.isLoading"
-          class="w-full"
-        />
-      </form>
     </div>
   </div>
 </template>
