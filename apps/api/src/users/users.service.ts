@@ -65,7 +65,7 @@ export class UsersService {
         passwordHash,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        role: dto.role,
+        role: dto.role as any,
       },
       select: {
         id: true,
