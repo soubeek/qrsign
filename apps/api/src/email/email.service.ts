@@ -52,14 +52,15 @@ export class EmailService {
     const participant = await this.prisma.participant.findUnique({
       where: { id: participantId },
       include: {
-        event: { include: { emailConfig: true, fields: true } },
+        event: { include: { fields: true } },
         signatures: { include: { documentDef: true } },
       },
     });
-    if (!participant?.event?.emailConfig)
-      throw new Error('Email not configured');
+    if (!participant?.event) throw new Error('Participant not found');
 
-    const emailConfig = participant.event.emailConfig;
+    const emailConfig = await this.prisma.emailConfig.findFirst();
+    if (!emailConfig) throw new Error('Email not configured');
+
     const emailField = participant.event.fields.find((f) => f.isEmailField);
     const data = participant.data as Record<string, any>;
     const recipientEmail = emailField ? data[emailField.key] : null;
@@ -132,18 +133,15 @@ export class EmailService {
     this.logger.log(`Email sent to ${recipientEmail} for ${participantId}`);
   }
 
-  async sendTest(eventSlug: string, toAddress: string): Promise<void> {
-    const event = await this.prisma.event.findUnique({
-      where: { slug: eventSlug },
-      include: { emailConfig: true },
-    });
-    if (!event?.emailConfig) throw new Error('Email not configured');
+  async sendTest(toAddress: string): Promise<void> {
+    const emailConfig = await this.prisma.emailConfig.findFirst();
+    if (!emailConfig) throw new Error('Email not configured');
 
-    const transport = await this.createTransport(event.emailConfig);
+    const transport = await this.createTransport(emailConfig);
     await transport.sendMail({
-      from: `"${event.emailConfig.fromName}" <${event.emailConfig.fromAddress}>`,
+      from: `"${emailConfig.fromName}" <${emailConfig.fromAddress}>`,
       to: toAddress,
-      subject: `[TEST] ${event.emailConfig.subject}`,
+      subject: `[TEST] ${emailConfig.subject}`,
       html: '<h1>Email de test</h1><p>La configuration SMTP est fonctionnelle.</p>',
     });
   }

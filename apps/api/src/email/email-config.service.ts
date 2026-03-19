@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
 import { UpsertEmailConfigDto } from './dto/upsert-email-config.dto';
@@ -10,23 +10,14 @@ export class EmailConfigService {
     private emailService: EmailService,
   ) {}
 
-  async findByEvent(slug: string) {
-    const event = await this.prisma.event.findUnique({
-      where: { slug },
-      include: { emailConfig: true },
-    });
-    if (!event) throw new NotFoundException('Event not found');
-    if (!event.emailConfig) return null;
-
-    return {
-      ...event.emailConfig,
-      smtpPass: '••••••••',
-    };
+  async find() {
+    const config = await this.prisma.emailConfig.findFirst();
+    if (!config) return null;
+    return { ...config, smtpPass: '••••••••' };
   }
 
-  async upsert(slug: string, dto: UpsertEmailConfigDto) {
-    const event = await this.prisma.event.findUnique({ where: { slug } });
-    if (!event) throw new NotFoundException('Event not found');
+  async upsert(dto: UpsertEmailConfigDto) {
+    const existing = await this.prisma.emailConfig.findFirst();
 
     const data: any = {
       smtpHost: dto.smtpHost,
@@ -37,7 +28,7 @@ export class EmailConfigService {
       fromName: dto.fromName,
       autoSendOnSign: dto.autoSendOnSign ?? false,
       allowManualSend: dto.allowManualSend ?? true,
-      subject: dto.subject || 'Votre document signé',
+      subject: dto.subject || 'Votre document signe',
       bodyTemplate: dto.bodyTemplate || '',
     };
 
@@ -45,23 +36,12 @@ export class EmailConfigService {
       data.smtpPass = this.emailService.encrypt(dto.smtpPass);
     }
 
-    const existing = await this.prisma.emailConfig.findUnique({
-      where: { eventId: event.id },
-    });
-
     if (existing) {
       if (!data.smtpPass) delete data.smtpPass;
-      return this.prisma.emailConfig.update({
-        where: { id: existing.id },
-        data,
-      });
+      return this.prisma.emailConfig.update({ where: { id: existing.id }, data });
     } else {
-      if (!data.smtpPass) {
-        data.smtpPass = this.emailService.encrypt('');
-      }
-      return this.prisma.emailConfig.create({
-        data: { ...data, eventId: event.id },
-      });
+      if (!data.smtpPass) data.smtpPass = this.emailService.encrypt('');
+      return this.prisma.emailConfig.create({ data });
     }
   }
 }

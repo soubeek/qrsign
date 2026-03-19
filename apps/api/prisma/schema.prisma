@@ -74,7 +74,6 @@ model Event {
 
   fields           FieldDef[]
   documents        DocumentDef[]
-  emailConfig      EmailConfig?
   participants     Participant[]
   userAccess       UserEvent[]
 
@@ -135,9 +134,9 @@ model DocumentDef {
   @@map("document_defs")
 }
 
+// Configuration email globale (singleton — une seule ligne)
 model EmailConfig {
   id              String  @id @default(uuid())
-  eventId         String  @unique @map("event_id")
 
   smtpHost        String  @map("smtp_host")
   smtpPort        Int     @default(587) @map("smtp_port")
@@ -152,8 +151,6 @@ model EmailConfig {
 
   subject         String  @default("Votre document signe")
   bodyTemplate    String  @map("body_template")
-
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("email_configs")
 }

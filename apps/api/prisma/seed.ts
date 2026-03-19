@@ -178,13 +178,12 @@ async function main() {
     },
   });
 
-  // 5. EmailConfig
-  await prisma.emailConfig.upsert({
-    where: { eventId: event.id },
-    update: {},
-    create: {
-      eventId: event.id,
-      smtpHost: 'smtp.example.com',
+  // 5. EmailConfig (global — singleton)
+  const existingEmail = await prisma.emailConfig.findFirst();
+  if (!existingEmail) {
+    await prisma.emailConfig.create({
+      data: {
+        smtpHost: 'smtp.example.com',
       smtpPort: 587,
       smtpSecure: false,
       smtpUser: 'noreply@mairie-saintpaul.re',
@@ -195,9 +194,10 @@ async function main() {
       allowManualSend: true,
       subject: 'Votre document sign\u00e9 \u2013 Conseil Municipal',
       bodyTemplate:
-        '<p>Bonjour {{prenom}} {{nom}},</p><p>Veuillez trouver ci-joint votre document sign\u00e9 lors du Conseil Municipal.</p><p>Cordialement,<br>Mairie de Saint-Paul</p>',
-    },
-  });
+        '<p>Bonjour {{participantName}},</p><p>Veuillez trouver ci-joint vos documents signes.</p><p>Cordialement,<br>{{organizationName}}</p>',
+      },
+    });
+  }
 
   // 6. Participants
   const participants = [

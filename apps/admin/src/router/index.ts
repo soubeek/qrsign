@@ -52,12 +52,6 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
     },
     {
-      path: '/events/:slug/config/email',
-      name: 'email-settings',
-      component: () => import('@/views/EmailSettingsView.vue'),
-      meta: { requiresAuth: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
-    },
-    {
       path: '/events/:slug/participants',
       name: 'participants',
       component: () => import('@/views/ParticipantsView.vue'),
@@ -74,6 +68,12 @@ const router = createRouter({
       name: 'export',
       component: () => import('@/views/ExportView.vue'),
       meta: { requiresAuth: true, roles: ['SUPER_ADMIN', 'ADMIN', 'VIEWER'] },
+    },
+    {
+      path: '/email',
+      name: 'email-settings',
+      component: () => import('@/views/EmailSettingsView.vue'),
+      meta: { requiresAuth: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
     },
     {
       path: '/users',

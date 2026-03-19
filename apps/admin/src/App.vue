@@ -67,6 +67,13 @@ async function logout() {
           <i class="pi pi-calendar"></i> Evenements
         </router-link>
 
+        <router-link v-if="auth.hasRole('SUPER_ADMIN', 'ADMIN')" to="/email"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+          active-class="bg-gray-800 !text-white"
+        >
+          <i class="pi pi-envelope"></i> Email
+        </router-link>
+
         <router-link v-if="auth.hasRole('SUPER_ADMIN')" to="/users"
           class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
           active-class="bg-gray-800 !text-white"

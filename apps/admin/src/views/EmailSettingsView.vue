@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Password from 'primevue/password'
@@ -11,26 +11,38 @@ import Dialog from 'primevue/dialog'
 import { useToast } from 'primevue/usetoast'
 import api from '../lib/axios'
 
-const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const slug = route.params.slug as string
-const form = ref<any>({ smtpHost: '', smtpPort: 587, smtpSecure: false, smtpUser: '', smtpPass: '', fromAddress: '', fromName: '', autoSendOnSign: false, allowManualSend: true, subject: 'Votre document signé', bodyTemplate: '' })
+const form = ref<any>({ smtpHost: '', smtpPort: 587, smtpSecure: false, smtpUser: '', smtpPass: '', fromAddress: '', fromName: '', autoSendOnSign: false, allowManualSend: true, subject: 'Votre document signe', bodyTemplate: '' })
 const showTest = ref(false)
 const testAddress = ref('')
 
 const variables = ['{{participantName}}', '{{eventTitle}}', '{{signedAt}}', '{{organizationName}}']
 
-onMounted(async () => { try { const { data } = await api.get(`/events/${slug}/email-config`); if (data) form.value = { ...form.value, ...data } } catch {} })
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/email-config')
+    if (data) form.value = { ...form.value, ...data }
+  } catch {}
+})
 
 async function save() {
-  try { await api.put(`/events/${slug}/email-config`, form.value); toast.add({ severity: 'success', summary: 'Config email sauvegardée', life: 2000 }) }
-  catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
+  try {
+    await api.put('/email-config', form.value)
+    toast.add({ severity: 'success', summary: 'Configuration email sauvegardee', life: 2000 })
+  } catch {
+    toast.add({ severity: 'error', summary: 'Erreur', life: 3000 })
+  }
 }
 
 async function sendTest() {
-  try { await api.post(`/events/${slug}/email-config/test`, { toAddress: testAddress.value }); toast.add({ severity: 'success', summary: 'Email de test envoyé', life: 3000 }); showTest.value = false }
-  catch (e: any) { toast.add({ severity: 'error', summary: 'Erreur SMTP', detail: e?.response?.data?.message || e.message, life: 5000 }) }
+  try {
+    await api.post('/email-config/test', { toAddress: testAddress.value })
+    toast.add({ severity: 'success', summary: 'Email de test envoye', life: 3000 })
+    showTest.value = false
+  } catch (e: any) {
+    toast.add({ severity: 'error', summary: 'Erreur SMTP', detail: e?.response?.data?.message || e.message, life: 5000 })
+  }
 }
 
 function insertVar(v: string) { form.value.bodyTemplate += v }
@@ -38,29 +50,26 @@ function insertVar(v: string) { form.value.bodyTemplate += v }
 
 <template>
   <div>
-    <div class="flex items-center gap-3 mb-6">
-      <Button icon="pi pi-arrow-left" severity="secondary" text @click="router.push(`/events/${slug}/config`)" />
-      <h1 class="text-2xl font-bold">Paramètres email</h1>
-    </div>
+    <h1 class="text-2xl font-bold mb-6">Configuration email globale</h1>
     <div class="bg-white rounded-xl shadow p-6 space-y-6 max-w-3xl">
       <h2 class="font-semibold text-lg">Serveur SMTP</h2>
       <div class="grid grid-cols-2 gap-4">
-        <div><label class="text-sm font-medium">Hôte SMTP</label><InputText v-model="form.smtpHost" class="w-full mt-1" /></div>
+        <div><label class="text-sm font-medium">Hote SMTP</label><InputText v-model="form.smtpHost" class="w-full mt-1" /></div>
         <div><label class="text-sm font-medium">Port</label><InputNumber v-model="form.smtpPort" class="w-full mt-1" /></div>
         <div><label class="text-sm font-medium">Utilisateur</label><InputText v-model="form.smtpUser" class="w-full mt-1" /></div>
         <div><label class="text-sm font-medium">Mot de passe</label><Password v-model="form.smtpPass" :feedback="false" toggleMask class="w-full mt-1" inputClass="w-full" /></div>
       </div>
-      <div class="flex items-center gap-2"><ToggleSwitch v-model="form.smtpSecure" /><span class="text-sm">Connexion sécurisée (SSL/TLS)</span></div>
+      <div class="flex items-center gap-2"><ToggleSwitch v-model="form.smtpSecure" /><span class="text-sm">Connexion securisee (SSL/TLS)</span></div>
       <div class="grid grid-cols-2 gap-4">
-        <div><label class="text-sm font-medium">Adresse expéditeur</label><InputText v-model="form.fromAddress" class="w-full mt-1" /></div>
-        <div><label class="text-sm font-medium">Nom expéditeur</label><InputText v-model="form.fromName" class="w-full mt-1" /></div>
+        <div><label class="text-sm font-medium">Adresse expediteur</label><InputText v-model="form.fromAddress" class="w-full mt-1" /></div>
+        <div><label class="text-sm font-medium">Nom expediteur</label><InputText v-model="form.fromName" class="w-full mt-1" /></div>
       </div>
       <h2 class="font-semibold text-lg pt-4">Comportement</h2>
       <div class="space-y-2">
-        <div class="flex items-center gap-2"><ToggleSwitch v-model="form.autoSendOnSign" /><span class="text-sm">Envoyer automatiquement après signature</span></div>
+        <div class="flex items-center gap-2"><ToggleSwitch v-model="form.autoSendOnSign" /><span class="text-sm">Envoyer automatiquement apres signature</span></div>
         <div class="flex items-center gap-2"><ToggleSwitch v-model="form.allowManualSend" /><span class="text-sm">Autoriser l'envoi manuel</span></div>
       </div>
-      <h2 class="font-semibold text-lg pt-4">Template</h2>
+      <h2 class="font-semibold text-lg pt-4">Template email</h2>
       <div><label class="text-sm font-medium">Sujet</label><InputText v-model="form.subject" class="w-full mt-1" /></div>
       <div>
         <label class="text-sm font-medium">Corps du message</label>

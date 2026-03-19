@@ -22,7 +22,6 @@ export class EventsService {
       include: {
         fields: { orderBy: { displayOrder: 'asc' } },
         documents: { orderBy: { displayOrder: 'asc' } },
-        emailConfig: true,
         _count: { select: { participants: true } },
       },
     });
@@ -55,15 +54,14 @@ export class EventsService {
       include: {
         fields: { orderBy: { displayOrder: 'asc' } },
         documents: { orderBy: { displayOrder: 'asc' } },
-        emailConfig: {
-          select: {
-            id: true, autoSendOnSign: true, allowManualSend: true,
-            subject: true, fromName: true, fromAddress: true,
-          },
-        },
       },
     });
     if (!event) throw new NotFoundException('Event not found');
+
+    // Load global email config
+    const emailConfig = await this.prisma.emailConfig.findFirst({
+      select: { id: true, autoSendOnSign: true, allowManualSend: true },
+    });
 
     return {
       event: {
@@ -75,7 +73,7 @@ export class EventsService {
       },
       fields: event.fields,
       documents: event.documents,
-      email: event.emailConfig,
+      email: emailConfig,
     };
   }
 }

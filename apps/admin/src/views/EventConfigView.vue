@@ -63,11 +63,6 @@ async function saveGeneral() {
           <Button label="Ouvrir l'éditeur de document" icon="pi pi-file" @click="router.push(`/events/${slug}/config/document`)" />
         </div>
       </TabPanel>
-      <TabPanel header="Email">
-        <div class="p-4">
-          <Button label="Ouvrir les paramètres email" icon="pi pi-envelope" @click="router.push(`/events/${slug}/config/email`)" />
-        </div>
-      </TabPanel>
       <TabPanel header="Accès">
         <div class="p-4">
           <p class="text-gray-500 mb-4">Gérez les utilisateurs ayant accès à cet événement depuis la page <router-link to="/users" class="text-blue-600 underline">Utilisateurs</router-link>.</p>

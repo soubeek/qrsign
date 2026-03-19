@@ -24,7 +24,6 @@ export class SigningService {
       include: {
         fields: { orderBy: { displayOrder: 'asc' } },
         documents: { where: { required: true } },
-        emailConfig: true,
       },
     });
     if (!event) throw new NotFoundException('Event not found');
