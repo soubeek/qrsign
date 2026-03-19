@@ -111,6 +111,12 @@ export const useCheckinStore = defineStore('checkin', () => {
     }
   }
 
+  async function markPresent(id: string) {
+    try {
+      await api.post(`/events/${getSlug()}/participants/${id}/status`, { status: 'PRESENT' })
+    } catch {}
+  }
+
   async function searchParticipants(query: string, limit = 8) {
     const { data } = await api.get(`/events/${getSlug()}/participants`, {
       params: { search: query, limit },
@@ -139,6 +145,7 @@ export const useCheckinStore = defineStore('checkin', () => {
     error,
     scan,
     loadParticipant,
+    markPresent,
     updateParticipant,
     sign,
     sendEmail,

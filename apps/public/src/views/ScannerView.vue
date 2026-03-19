@@ -150,6 +150,10 @@ async function selectParticipant(p: any) {
   isProcessing.value = true
   errorBanner.value = null
   try {
+    // Mark as PRESENT if ABSENT
+    if (p.status === 'ABSENT') {
+      await checkin.markPresent(p.id)
+    }
     await checkin.loadParticipant(p.id)
     playSuccess()
     vibrate(200)
