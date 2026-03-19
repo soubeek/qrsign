@@ -25,6 +25,8 @@ const editParticipant = ref<any>(null)
 const editData = ref<Record<string, any>>({})
 const showDeleteConfirm = ref(false)
 const deleteTarget = ref<any>(null)
+const showCreate = ref(false)
+const newParticipant = ref<Record<string, any>>({})
 
 const tabs = [
   { label: 'Tous', value: undefined },
@@ -136,6 +138,28 @@ async function executeDelete() {
   }
 }
 
+function openCreate() {
+  newParticipant.value = {}
+  // Pre-fill QR code field with auto-generated value
+  const qrField = fields.value.find((f: any) => f.isQrField)
+  if (qrField) newParticipant.value[qrField.key] = 'QR-' + Math.random().toString(36).substring(2, 8).toUpperCase()
+  showCreate.value = true
+}
+
+async function createParticipant() {
+  const qrField = fields.value.find((f: any) => f.isQrField)
+  const qrCode = qrField ? newParticipant.value[qrField.key] : newParticipant.value['qr_code']
+  if (!qrCode) { toast.add({ severity: 'error', summary: 'Le code QR est requis', life: 3000 }); return }
+  try {
+    await api.post(`/events/${slug}/participants`, { qrCode, data: newParticipant.value })
+    showCreate.value = false
+    loadParticipants()
+    toast.add({ severity: 'success', summary: 'Participant cree', life: 2000 })
+  } catch (e: any) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: e?.response?.data?.message, life: 3000 })
+  }
+}
+
 async function sendEmail(id: string) {
   try {
     await api.post(`/events/${slug}/participants/${id}/email`)
@@ -148,7 +172,10 @@ async function sendEmail(id: string) {
 
 <template>
   <div>
-    <h1 class="text-2xl font-bold mb-4">Participants</h1>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold">Participants</h1>
+      <Button label="Ajouter" icon="pi pi-plus" size="small" @click="openCreate" />
+    </div>
 
     <!-- Status filter tabs with counts -->
     <div class="flex gap-2 mb-4 flex-wrap">
@@ -210,6 +237,24 @@ async function sendEmail(id: string) {
       <template #footer>
         <Button label="Annuler" severity="secondary" text @click="showResetConfirm = false" />
         <Button label="Reinitialiser" icon="pi pi-refresh" severity="danger" @click="executeReset" />
+      </template>
+    </Dialog>
+
+    <!-- Create participant dialog -->
+    <Dialog v-model:visible="showCreate" header="Ajouter un participant" modal class="w-full max-w-lg">
+      <div class="space-y-3 p-2">
+        <div v-for="f in fields" :key="f.key">
+          <label class="text-sm font-medium">{{ f.label }} <span v-if="f.required || f.isQrField" class="text-red-500">*</span></label>
+          <select v-if="f.type === 'SELECT'" v-model="newParticipant[f.key]" class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1">
+            <option value="">—</option>
+            <option v-for="opt in f.options" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+          <InputText v-else v-model="newParticipant[f.key]" class="w-full mt-1" :type="f.type === 'EMAIL' ? 'email' : f.type === 'TEL' ? 'tel' : f.type === 'DATE' ? 'date' : f.type === 'NUMBER' ? 'number' : 'text'" />
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" text @click="showCreate = false" />
+        <Button label="Creer" icon="pi pi-check" @click="createParticipant" />
       </template>
     </Dialog>
 
