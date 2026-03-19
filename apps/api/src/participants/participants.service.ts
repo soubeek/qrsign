@@ -297,16 +297,6 @@ export class ParticipantsService {
       page.drawText(prenom, { x: textX, y: textY, size: 11, font, color: rgb(0, 0, 0) });
       textY -= 18;
 
-      // Extra fields (commune, groupe, etc.)
-      const displayFields = event.fields.filter(f => f.displayInList && f.key !== 'nom' && f.key !== 'prenom');
-      for (const field of displayFields.slice(0, 3)) {
-        const val = data[field.key];
-        if (val) {
-          page.drawText(String(val), { x: textX, y: textY, size: 8, font, color: rgb(0.3, 0.3, 0.3) });
-          textY -= 12;
-        }
-      }
-
       // QR code text at bottom
       page.drawText(p.qrCode, { x: textX, y: y - badgeH + 10, size: 7, font, color: rgb(0.5, 0.5, 0.5) });
     }
