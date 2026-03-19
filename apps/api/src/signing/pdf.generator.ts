@@ -236,7 +236,7 @@ export class PdfGenerator {
     for (const section of sections) {
       addNewPageIfNeeded(40);
       const sectionAlign = section.align || 'left';
-      if (section.title) drawText(section.title, 11, fontBold, rgb(0, 0, 0), sectionAlign);
+      if (section.title) drawText(section.title, 11, fontBold, rgb(0, 0, 0), 'left');
       if (section.content) drawText(section.content, 9, font, rgb(0, 0, 0), sectionAlign);
       y -= 8;
     }
