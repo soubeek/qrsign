@@ -159,15 +159,6 @@ export class PdfGenerator {
     page.drawText(titleText, { x: titleX, y, size: titleSize, font: fontBold, color: rgb(0, 0, 0) });
     y -= titleSize + 16;
 
-    // Separator line
-    page.drawLine({
-      start: { x: margin, y },
-      end: { x: width - margin, y },
-      thickness: 0.5,
-      color: rgb(0.8, 0.8, 0.8),
-    });
-    y -= 16;
-
     // Notice sections
     const sections = Array.isArray(documentDef.noticeSections)
       ? documentDef.noticeSections
