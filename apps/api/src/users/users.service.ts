@@ -123,11 +123,11 @@ export class UsersService {
 
     const assignment = await this.prisma.userEvent.upsert({
       where: { userId_eventId: { userId, eventId: dto.eventId } },
-      update: { eventRole: dto.eventRole },
+      update: { eventRole: dto.eventRole as any },
       create: {
         userId,
         eventId: dto.eventId,
-        eventRole: dto.eventRole,
+        eventRole: dto.eventRole as any,
       },
       include: { event: { select: { id: true, slug: true, title: true } } },
     });
