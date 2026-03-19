@@ -9,3 +9,13 @@ html, body {
 *, *::before, *::after {
   touch-action: manipulation;
 }
+
+/* Remove tap highlight and hover delay on touch */
+@media (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  *:hover {
+    transition-delay: 0s !important;
+  }
+}
