@@ -39,21 +39,26 @@ const participantName = computed(() => {
   return `${d['prenom'] || ''} ${d['nom'] || ''}`.trim()
 })
 
-const noticeSections = computed(() => {
-  if (!currentDoc.value?.noticeSections) return []
-  const ns = currentDoc.value.noticeSections
-  return Array.isArray(ns) ? ns : JSON.parse(ns as any || '[]')
-})
-
-const declarationText = computed(() => {
-  if (!currentDoc.value?.declarationTemplate || !participant.value?.data) return ''
-  let text = currentDoc.value.declarationTemplate
+function replaceVars(text: string): string {
+  if (!text || !participant.value?.data) return text
   const data = (participant.value.data || {}) as Record<string, any>
   for (const [key, value] of Object.entries(data)) {
     text = text.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value || ''))
   }
-  text = text.replace('{signedAt}', new Date().toLocaleDateString('fr-FR') + ' a ' + new Date().toLocaleTimeString('fr-FR'))
+  text = text.replace(/\{signedAt\}/g, new Date().toLocaleDateString('fr-FR') + ' a ' + new Date().toLocaleTimeString('fr-FR'))
   return text
+}
+
+const noticeSections = computed(() => {
+  if (!currentDoc.value?.noticeSections) return []
+  const ns = currentDoc.value.noticeSections
+  const sections = Array.isArray(ns) ? ns : JSON.parse(ns as any || '[]')
+  return sections.map((s: any) => ({ ...s, title: replaceVars(s.title), content: replaceVars(s.content) }))
+})
+
+const declarationText = computed(() => {
+  if (!currentDoc.value?.declarationTemplate) return ''
+  return replaceVars(currentDoc.value.declarationTemplate)
 })
 
 function requestValidation() {
