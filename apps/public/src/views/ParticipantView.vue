@@ -35,8 +35,10 @@ function statusLabel(s: string) { return s === 'ABSENT' ? 'Absent' : s === 'PRES
 async function save() {
   isSaving.value = true; saveMessage.value = ''
   try {
-    const result = await checkin.updateParticipant(participantId, editData.value)
-    if (result?.data) editData.value = { ...(result.data as Record<string, any>) }
+    await checkin.updateParticipant(participantId, editData.value)
+    // Reload full participant with signatures
+    await checkin.loadParticipant(participantId)
+    if (participant.value?.data) editData.value = { ...(participant.value.data as Record<string, any>) }
     saveMessage.value = 'Sauvegarde'
     setTimeout(() => { saveMessage.value = '' }, 2000)
   } catch { saveMessage.value = 'Erreur' }
