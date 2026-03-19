@@ -17,6 +17,7 @@ const participantId = route.params.id as string
 const editData = ref<Record<string, any>>({})
 const isSaving = ref(false)
 const saveMessage = ref('')
+const qrCodeUrl = ref<string | null>(null)
 
 const participant = computed(() => checkin.current)
 const fields = computed(() => config.fields)
@@ -59,6 +60,11 @@ onMounted(async () => {
   if (!participant.value || participant.value.id !== participantId) await checkin.loadParticipant(participantId)
   if (participant.value?.data) editData.value = { ...(participant.value.data as Record<string, any>) }
   if (!config.config) await config.loadConfig()
+  // Load QR code image
+  try {
+    const res = await api.get(`/events/${config.slug}/participants/${participantId}/qrcode`, { responseType: 'blob' })
+    qrCodeUrl.value = URL.createObjectURL(res.data)
+  } catch {}
 })
 </script>
 
@@ -77,8 +83,9 @@ onMounted(async () => {
       <div v-else-if="participant" class="space-y-4">
         <!-- Header card -->
         <div class="bg-white rounded-xl shadow p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div>
+          <div class="flex items-center gap-4 mb-4">
+            <img v-if="qrCodeUrl" :src="qrCodeUrl" alt="QR Code" class="w-20 h-20 rounded border border-gray-200" />
+            <div class="flex-1">
               <h2 class="text-lg font-semibold">{{ editData['prenom'] }} {{ editData['nom'] }}</h2>
               <p class="text-gray-500 text-sm">{{ (participant as any).qrCode }}</p>
             </div>

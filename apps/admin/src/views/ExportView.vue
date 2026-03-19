@@ -11,6 +11,7 @@ const slug = route.params.slug as string
 const stats = ref<any>(null)
 const isDownloadingCsv = ref(false)
 const isDownloadingPdfs = ref(false)
+const isDownloadingBadges = ref(false)
 
 onMounted(async () => {
   try {
@@ -54,17 +55,41 @@ async function downloadPdfs() {
     isDownloadingPdfs.value = false
   }
 }
+
+async function downloadBadges() {
+  isDownloadingBadges.value = true
+  try {
+    const res = await api.get(`/events/${slug}/participants/badges`, { responseType: 'blob' })
+    const url = URL.createObjectURL(res.data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${slug}_badges.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.add({ severity: 'success', summary: 'Badges telecharges', life: 2000 })
+  } catch {
+    toast.add({ severity: 'error', summary: 'Erreur de telechargement', life: 3000 })
+  } finally {
+    isDownloadingBadges.value = false
+  }
+}
 </script>
 
 <template>
   <div>
     <h1 class="text-2xl font-bold mb-6">Export</h1>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="bg-white rounded-xl shadow p-6 text-center">
         <i class="pi pi-file text-4xl text-blue-600 mb-3"></i>
         <h2 class="font-semibold mb-2">Export CSV</h2>
         <p class="text-sm text-gray-500 mb-4">Tous les participants</p>
         <Button label="Telecharger" icon="pi pi-download" :loading="isDownloadingCsv" @click="downloadCsv" />
+      </div>
+      <div class="bg-white rounded-xl shadow p-6 text-center">
+        <i class="pi pi-qrcode text-4xl text-purple-600 mb-3"></i>
+        <h2 class="font-semibold mb-2">Badges QR</h2>
+        <p class="text-sm text-gray-500 mb-4">PDF avec QR codes pour impression</p>
+        <Button label="Telecharger" icon="pi pi-download" severity="help" :loading="isDownloadingBadges" @click="downloadBadges" />
       </div>
       <div class="bg-white rounded-xl shadow p-6 text-center">
         <i class="pi pi-file-pdf text-4xl text-red-600 mb-3"></i>
