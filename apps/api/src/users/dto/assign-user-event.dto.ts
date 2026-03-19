@@ -1,11 +1,10 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { GlobalRole } from '@prisma/client';
+import { IsOptional, IsString } from 'class-validator';
 
 export class AssignUserEventDto {
   @IsString()
   eventId: string;
 
-  @IsEnum(GlobalRole)
+  @IsString()
   @IsOptional()
-  eventRole?: GlobalRole;
+  eventRole?: string;
 }

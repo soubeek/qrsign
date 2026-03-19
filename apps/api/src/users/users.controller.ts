@@ -1,5 +1,4 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { GlobalRole } from '@prisma/client';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -11,43 +10,43 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get()
-  @Roles(GlobalRole.ADMIN)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  @Roles(GlobalRole.ADMIN)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
   @Post()
-  @Roles(GlobalRole.SUPER_ADMIN)
+  @Roles('SUPER_ADMIN')
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }
 
   @Patch(':id')
-  @Roles(GlobalRole.ADMIN)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles(GlobalRole.SUPER_ADMIN)
+  @Roles('SUPER_ADMIN')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 
   @Post(':id/events')
-  @Roles(GlobalRole.ADMIN)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   assignEvent(@Param('id') id: string, @Body() dto: AssignUserEventDto) {
     return this.usersService.assignEvent(id, dto);
   }
 
   @Delete(':id/events/:eventId')
-  @Roles(GlobalRole.ADMIN)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   removeEventAssignment(@Param('id') id: string, @Param('eventId') eventId: string) {
     return this.usersService.removeEventAssignment(id, eventId);
   }
