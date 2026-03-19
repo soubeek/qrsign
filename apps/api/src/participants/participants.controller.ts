@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Param, Body, Query, Res,
+  Controller, Get, Post, Put, Delete, Param, Body, Query, Res,
   UseInterceptors, UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -51,6 +51,12 @@ export class ParticipantsController {
   @Roles('SUPER_ADMIN', 'ADMIN')
   create(@Param('slug') slug: string, @Body() dto: CreateParticipantDto) {
     return this.participantsService.create(slug, dto);
+  }
+
+  @Delete(':id')
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  async remove(@Param('id') id: string) {
+    return this.participantsService.remove(id);
   }
 
   @Get(':id/qrcode')

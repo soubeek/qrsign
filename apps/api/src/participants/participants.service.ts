@@ -116,6 +116,14 @@ export class ParticipantsService {
     return this.prisma.participant.update({ where: { id }, data: { status: status as any } });
   }
 
+  async remove(id: string) {
+    const participant = await this.prisma.participant.findUnique({ where: { id } });
+    if (!participant) throw new NotFoundException('Participant not found');
+    await this.prisma.participantSignature.deleteMany({ where: { participantId: id } });
+    await this.prisma.participant.delete({ where: { id } });
+    return { success: true };
+  }
+
   async generateTemplateCsv(slug: string): Promise<string> {
     const event = await this.prisma.event.findUnique({
       where: { slug },

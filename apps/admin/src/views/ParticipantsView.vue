@@ -23,6 +23,8 @@ const showResetConfirm = ref(false)
 const resetTarget = ref<any>(null)
 const editParticipant = ref<any>(null)
 const editData = ref<Record<string, any>>({})
+const showDeleteConfirm = ref(false)
+const deleteTarget = ref<any>(null)
 
 const tabs = [
   { label: 'Tous', value: undefined },
@@ -115,6 +117,25 @@ async function executeReset() {
   resetTarget.value = null
 }
 
+function confirmDelete(p: any) {
+  deleteTarget.value = p
+  showDeleteConfirm.value = true
+}
+
+async function executeDelete() {
+  if (!deleteTarget.value) return
+  try {
+    await api.delete(`/events/${slug}/participants/${deleteTarget.value.id}`)
+    loadParticipants()
+    toast.add({ severity: 'success', summary: 'Participant supprime', life: 2000 })
+  } catch {
+    toast.add({ severity: 'error', summary: 'Erreur', life: 3000 })
+  } finally {
+    showDeleteConfirm.value = false
+    deleteTarget.value = null
+  }
+}
+
 async function sendEmail(id: string) {
   try {
     await api.post(`/events/${slug}/participants/${id}/email`)
@@ -160,6 +181,7 @@ async function sendEmail(id: string) {
             <Button v-if="data.status === 'SIGNED'" icon="pi pi-download" severity="info" text size="small" title="Telecharger PDF" @click="downloadPdf(data.id)" />
             <Button v-if="data.status === 'SIGNED'" icon="pi pi-envelope" severity="secondary" text size="small" title="Envoyer email" @click="sendEmail(data.id)" />
             <Button v-if="data.status === 'SIGNED'" icon="pi pi-refresh" severity="danger" text size="small" title="Reinitialiser le statut" @click="confirmReset(data)" />
+            <Button icon="pi pi-trash" severity="danger" text size="small" title="Supprimer" @click="confirmDelete(data)" />
           </div>
         </template>
       </Column>
@@ -188,6 +210,18 @@ async function sendEmail(id: string) {
       <template #footer>
         <Button label="Annuler" severity="secondary" text @click="showResetConfirm = false" />
         <Button label="Reinitialiser" icon="pi pi-refresh" severity="danger" @click="executeReset" />
+      </template>
+    </Dialog>
+
+    <!-- Delete confirmation -->
+    <Dialog v-model:visible="showDeleteConfirm" header="Supprimer le participant" modal class="w-full max-w-sm">
+      <div v-if="deleteTarget" class="p-2">
+        <p>Supprimer <strong>{{ deleteTarget.data?.prenom }} {{ deleteTarget.data?.nom }}</strong> ?</p>
+        <p class="text-sm text-red-600 mt-2">Cette action est irreversible. Les signatures associees seront egalement supprimees.</p>
+      </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" text @click="showDeleteConfirm = false" />
+        <Button label="Supprimer" icon="pi pi-trash" severity="danger" @click="executeDelete" />
       </template>
     </Dialog>
   </div>
