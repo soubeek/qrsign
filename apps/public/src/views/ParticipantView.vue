@@ -105,7 +105,7 @@ onMounted(async () => {
               <!-- Status toggle -->
               <div class="flex gap-1">
                 <Button v-if="participant.status === 'ABSENT'" label="Marquer present" icon="pi pi-check" severity="success" size="small" @click="changeStatus('PRESENT')" />
-                <Button v-if="participant.status === 'PRESENT' || participant.status === 'SIGNED'" label="Marquer absent" icon="pi pi-times" severity="warn" size="small" outlined @click="changeStatus('ABSENT')" />
+                <Button v-if="participant.status === 'PRESENT' && !allSigned" label="Marquer absent" icon="pi pi-times" severity="warn" size="small" outlined @click="changeStatus('ABSENT')" />
               </div>
             </div>
           </div>
