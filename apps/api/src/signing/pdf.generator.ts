@@ -71,24 +71,35 @@ export class PdfGenerator {
       color = rgb(0, 0, 0),
     ) => {
       const maxWidth = width - 2 * margin;
-      const words = text.split(' ');
-      let line = '';
-      for (const word of words) {
-        const testLine = line ? `${line} ${word}` : word;
-        const testWidth = f.widthOfTextAtSize(testLine, size);
-        if (testWidth > maxWidth && line) {
+      // Split by newlines first, then word-wrap each line
+      const paragraphs = text.split(/\r?\n/);
+      for (let pi = 0; pi < paragraphs.length; pi++) {
+        const para = paragraphs[pi];
+        if (para.trim() === '') {
+          // Empty line = paragraph spacing
+          y -= size + 2;
+          addNewPageIfNeeded(size + 4);
+          continue;
+        }
+        const words = para.split(' ');
+        let line = '';
+        for (const word of words) {
+          const testLine = line ? `${line} ${word}` : word;
+          const testWidth = f.widthOfTextAtSize(testLine, size);
+          if (testWidth > maxWidth && line) {
+            addNewPageIfNeeded(size + 4);
+            page.drawText(line, { x: margin, y, size, font: f, color });
+            y -= size + 4;
+            line = word;
+          } else {
+            line = testLine;
+          }
+        }
+        if (line) {
           addNewPageIfNeeded(size + 4);
           page.drawText(line, { x: margin, y, size, font: f, color });
           y -= size + 4;
-          line = word;
-        } else {
-          line = testLine;
         }
-      }
-      if (line) {
-        addNewPageIfNeeded(size + 4);
-        page.drawText(line, { x: margin, y, size, font: f, color });
-        y -= size + 4;
       }
       y -= 4;
     };
