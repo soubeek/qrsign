@@ -17,6 +17,9 @@ const users = ref<any[]>([])
 const isLoading = ref(false)
 const showCreate = ref(false)
 const newUser = ref({ email: '', firstName: '', lastName: '', role: 'OPERATOR', password: '' })
+const showResetPassword = ref(false)
+const resetTargetUser = ref<any>(null)
+const resetNewPassword = ref('')
 const roles = ['SUPER_ADMIN', 'ADMIN', 'OPERATOR', 'VIEWER']
 
 onMounted(loadUsers)
@@ -38,10 +41,25 @@ async function toggleActive(user: any) {
   catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
 }
 
-async function resetPassword(id: string) {
+function openResetPassword(user: any) {
+  resetTargetUser.value = user
+  resetNewPassword.value = ''
+  showResetPassword.value = true
+}
+
+async function doResetPassword() {
+  if (!resetTargetUser.value) return
   try {
-    const { data } = await api.post(`/users/${id}/reset-password`)
-    toast.add({ severity: 'success', summary: `Nouveau mot de passe : ${data.tempPassword}`, life: 15000 })
+    if (resetNewPassword.value) {
+      // Custom password
+      await api.patch(`/users/${resetTargetUser.value.id}`, { password: resetNewPassword.value })
+      toast.add({ severity: 'success', summary: 'Mot de passe mis a jour', life: 3000 })
+    } else {
+      // Generate random
+      const { data } = await api.post(`/users/${resetTargetUser.value.id}/reset-password`)
+      toast.add({ severity: 'success', summary: `Mot de passe genere : ${data.tempPassword}`, life: 15000 })
+    }
+    showResetPassword.value = false
   } catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
 }
 
@@ -70,7 +88,7 @@ function roleSeverity(role: string) {
       <Column header="Actif"><template #body="{ data }"><ToggleSwitch v-model="data.isActive" @change="toggleActive(data)" /></template></Column>
       <Column header="Actions">
         <template #body="{ data }">
-          <Button icon="pi pi-key" severity="secondary" text size="small" title="Réinitialiser le mot de passe" @click="resetPassword(data.id)" />
+          <Button icon="pi pi-key" severity="secondary" text size="small" title="Mot de passe" @click="openResetPassword(data)" />
         </template>
       </Column>
     </DataTable>
@@ -85,6 +103,22 @@ function roleSeverity(role: string) {
         <div><label class="text-sm font-medium">Mot de passe temporaire</label><Password v-model="newUser.password" :feedback="false" toggleMask class="w-full mt-1" inputClass="w-full" /></div>
       </div>
       <template #footer><Button label="Créer" icon="pi pi-check" @click="createUser" /><Button label="Annuler" severity="secondary" text @click="showCreate = false" /></template>
+    </Dialog>
+
+    <!-- Reset password dialog -->
+    <Dialog v-model:visible="showResetPassword" header="Mot de passe" modal class="w-full max-w-sm">
+      <div v-if="resetTargetUser" class="space-y-4 p-2">
+        <p class="text-sm text-gray-600">{{ resetTargetUser.firstName }} {{ resetTargetUser.lastName }} ({{ resetTargetUser.email }})</p>
+        <div>
+          <label class="text-sm font-medium">Nouveau mot de passe</label>
+          <Password v-model="resetNewPassword" :feedback="false" toggleMask class="w-full mt-1" inputClass="w-full" placeholder="Laisser vide pour generer automatiquement" />
+          <p class="text-xs text-gray-400 mt-1">Vide = mot de passe aleatoire genere</p>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" text @click="showResetPassword = false" />
+        <Button :label="resetNewPassword ? 'Definir ce mot de passe' : 'Generer un mot de passe'" icon="pi pi-key" @click="doResetPassword" />
+      </template>
     </Dialog>
   </div>
 </template>
