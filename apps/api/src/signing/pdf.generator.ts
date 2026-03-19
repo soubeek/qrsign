@@ -216,10 +216,23 @@ export class PdfGenerator {
     // Space between logo and title
     y -= 8;
 
+    // Variable replacement function — works everywhere in the document
+    const dateStr = signedAt.toLocaleDateString('fr-FR') + ' a ' + signedAt.toLocaleTimeString('fr-FR');
+    const replaceVars = (text: string): string => {
+      if (!text) return text;
+      if (participant) {
+        for (const [key, value] of Object.entries(participant.data)) {
+          text = text.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value || ''));
+        }
+      }
+      text = text.replace(/\{signedAt\}/g, dateStr);
+      return text;
+    };
+
     // Document title — positioned left, center or right
     const titlePos = documentDef.titlePosition || 'center';
     const titleSize = 18;
-    const titleText = sanitize(documentDef.title || '');
+    const titleText = sanitize(replaceVars(documentDef.title || ''));
     const titleWidth = fontBold.widthOfTextAtSize(titleText, titleSize);
     let titleX: number;
     if (titlePos === 'left') titleX = margin;
@@ -237,27 +250,14 @@ export class PdfGenerator {
     for (const section of sections) {
       addNewPageIfNeeded(40);
       const sectionAlign = section.align || 'left';
-      if (section.title) drawText(section.title, 11, fontBold, rgb(0, 0, 0), 'left');
-      if (section.content) drawText(section.content, 9, font, rgb(0, 0, 0), sectionAlign);
+      if (section.title) drawText(replaceVars(section.title), 11, fontBold, rgb(0, 0, 0), 'left');
+      if (section.content) drawText(replaceVars(section.content), 9, font, rgb(0, 0, 0), sectionAlign);
       y -= 8;
     }
 
     // Declaration
     y -= 8;
-    let declaration = documentDef.declarationTemplate || '';
-    if (participant) {
-      for (const [key, value] of Object.entries(participant.data)) {
-        declaration = declaration.replace(
-          new RegExp(`\\{${key}\\}`, 'g'),
-          String(value || ''),
-        );
-      }
-    }
-    const dateStr =
-      signedAt.toLocaleDateString('fr-FR') +
-      ' a ' +
-      signedAt.toLocaleTimeString('fr-FR');
-    declaration = declaration.replace('{signedAt}', dateStr);
+    const declaration = replaceVars(documentDef.declarationTemplate || '');
     drawText(declaration, 10, font, rgb(0, 0, 0), documentDef.declarationAlign || 'left');
     y -= 12;
 
@@ -289,7 +289,7 @@ export class PdfGenerator {
       const p = pages[i];
       const footerY = 30;
       if (documentDef.pdfFooterText) {
-        p.drawText(documentDef.pdfFooterText, {
+        p.drawText(sanitize(replaceVars(documentDef.pdfFooterText)), {
           x: margin,
           y: footerY + 12,
           size: 8,
