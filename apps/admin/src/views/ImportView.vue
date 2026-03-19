@@ -17,6 +17,20 @@ const result = ref<any>(null)
 const isImporting = ref(false)
 const isDragOver = ref(false)
 
+async function downloadTemplate() {
+  try {
+    const res = await api.get(`/events/${slug}/participants/template-csv`, { responseType: 'blob' })
+    const url = URL.createObjectURL(res.data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${slug}_modele_import.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    toast.add({ severity: 'error', summary: 'Erreur de telechargement', life: 3000 })
+  }
+}
+
 function handleFile(f: File) {
   file.value = f
   const reader = new FileReader()
@@ -49,7 +63,10 @@ async function doImport() {
 
 <template>
   <div>
-    <h1 class="text-2xl font-bold mb-6">Importer des participants</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Importer des participants</h1>
+      <Button label="Telecharger le modele CSV" icon="pi pi-file" severity="secondary" size="small" @click="downloadTemplate" />
+    </div>
     <div class="border-2 border-dashed rounded-xl p-12 text-center mb-6 transition-colors" :class="isDragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-white'" @dragover.prevent="isDragOver = true" @dragleave="isDragOver = false" @drop.prevent="onDrop">
       <i class="pi pi-upload text-4xl text-gray-400 mb-4"></i>
       <p class="text-gray-600 mb-3">Glissez un fichier CSV ici</p>

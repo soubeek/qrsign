@@ -114,6 +114,38 @@ export class ParticipantsService {
     return this.prisma.participant.update({ where: { id }, data: { status: status as any } });
   }
 
+  async generateTemplateCsv(slug: string): Promise<string> {
+    const event = await this.prisma.event.findUnique({
+      where: { slug },
+      include: { fields: { orderBy: { displayOrder: 'asc' } } },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+
+    const headers = event.fields.map(f => f.key);
+    const labels = event.fields.map(f => f.label);
+
+    // Example row with hints
+    const example = event.fields.map(f => {
+      if (f.isQrField) return 'QR-001';
+      if (f.isEmailField) return 'exemple@email.fr';
+      switch (f.type) {
+        case 'SELECT': return f.options[0] || '';
+        case 'DATE': return '01/01/1980';
+        case 'TEL': return '0692000000';
+        case 'NUMBER': return '0';
+        case 'EMAIL': return 'exemple@email.fr';
+        default: return f.required ? `(requis)` : '';
+      }
+    });
+
+    const lines = [
+      headers.join(';'),
+      example.join(';'),
+    ];
+
+    return lines.join('\n');
+  }
+
   async importCsv(slug: string, fileBuffer: Buffer) {
     const event = await this.prisma.event.findUnique({ where: { slug }, include: { fields: true } });
     if (!event) throw new NotFoundException('Event not found');

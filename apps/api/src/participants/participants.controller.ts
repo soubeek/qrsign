@@ -29,6 +29,15 @@ export class ParticipantsController {
     return this.participantsService.findAll(slug, { search, status, limit: limit ? parseInt(limit, 10) : undefined });
   }
 
+  @Get('template-csv')
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  async getTemplateCsv(@Param('slug') slug: string, @Res() res: Response) {
+    const csv = await this.participantsService.generateTemplateCsv(slug);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${slug}_modele_import.csv"`);
+    res.send('\uFEFF' + csv);
+  }
+
   @Post()
   @Roles('SUPER_ADMIN', 'ADMIN')
   create(@Param('slug') slug: string, @Body() dto: CreateParticipantDto) {
