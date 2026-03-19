@@ -224,7 +224,6 @@ export class ParticipantsService {
     const event = await this.prisma.event.findUnique({
       where: { slug },
       include: {
-        fields: { orderBy: { displayOrder: 'asc' } },
         participants: { orderBy: { createdAt: 'asc' } },
       },
     });
@@ -234,70 +233,71 @@ export class ParticipantsService {
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
+    // Pre-generate all QR codes and embed them once
+    const qrCache = new Map<string, any>();
+    for (const p of event.participants) {
+      if (!qrCache.has(p.qrCode)) {
+        try {
+          const qrPng = await QRCode.toBuffer(p.qrCode, { type: 'png', width: 200, margin: 1 });
+          qrCache.set(p.qrCode, await doc.embedPng(qrPng));
+        } catch {}
+      }
+    }
+
     // Badge layout: 2 columns x 4 rows per A4 page
     const badgeW = 250;
     const badgeH = 180;
     const colGap = 30;
     const rowGap = 20;
     const startX = 35;
-    const startY = 842 - 40; // A4 height - top margin
+    const startY = 842 - 40;
     const cols = 2;
-    const rows = 4;
-    const perPage = cols * rows;
+    const perPage = cols * 4;
 
     for (let i = 0; i < event.participants.length; i++) {
       const p = event.participants[i];
       const data = p.data as Record<string, any>;
-      const pageIndex = Math.floor(i / perPage);
       const posOnPage = i % perPage;
 
-      // Add new page when needed
       if (posOnPage === 0) doc.addPage(PageSizes.A4);
-      const page = doc.getPages()[pageIndex];
+      const page = doc.getPages()[doc.getPageCount() - 1];
 
       const col = posOnPage % cols;
       const row = Math.floor(posOnPage / cols);
       const x = startX + col * (badgeW + colGap);
       const y = startY - row * (badgeH + rowGap);
 
-      // Badge border
+      // Border
       page.drawRectangle({
         x, y: y - badgeH, width: badgeW, height: badgeH,
-        borderColor: rgb(0.8, 0.8, 0.8), borderWidth: 0.5,
-        color: rgb(1, 1, 1),
+        borderColor: rgb(0.8, 0.8, 0.8), borderWidth: 0.5, color: rgb(1, 1, 1),
       });
 
-      // QR code (right side of badge)
-      try {
-        const qrPng = await QRCode.toBuffer(p.qrCode, { type: 'png', width: 200, margin: 1 });
-        const qrImage = await doc.embedPng(qrPng);
+      // QR code (reuse cached image)
+      const qrImage = qrCache.get(p.qrCode);
+      if (qrImage) {
         const qrSize = 80;
         page.drawImage(qrImage, {
           x: x + badgeW - qrSize - 15,
           y: y - badgeH + (badgeH - qrSize) / 2,
-          width: qrSize,
-          height: qrSize,
+          width: qrSize, height: qrSize,
         });
-      } catch {}
+      }
 
-      // Text (left side)
+      // Text
       const textX = x + 15;
       let textY = y - 25;
 
-      // Event title
       page.drawText(event.title, { x: textX, y: textY, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
       textY -= 18;
 
-      // Name
       const nom = (data['nom'] || '').toUpperCase();
       const prenom = data['prenom'] || '';
       const civilite = data['civilite'] || '';
       page.drawText(`${civilite} ${nom}`, { x: textX, y: textY, size: 12, font: fontBold, color: rgb(0, 0, 0) });
       textY -= 16;
       page.drawText(prenom, { x: textX, y: textY, size: 11, font, color: rgb(0, 0, 0) });
-      textY -= 18;
 
-      // QR code text at bottom
       page.drawText(p.qrCode, { x: textX, y: y - badgeH + 10, size: 7, font, color: rgb(0.5, 0.5, 0.5) });
     }
 
