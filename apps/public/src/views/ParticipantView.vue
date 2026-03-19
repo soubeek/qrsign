@@ -51,6 +51,17 @@ async function downloadPdf(docId: string) {
   } catch { saveMessage.value = 'Erreur de telechargement' }
 }
 
+async function changeStatus(status: string) {
+  try {
+    await api.post(`/events/${config.slug}/participants/${participantId}/status`, { status })
+    await checkin.loadParticipant(participantId)
+    saveMessage.value = status === 'PRESENT' ? 'Marque present' : 'Marque absent'
+    setTimeout(() => { saveMessage.value = '' }, 2000)
+  } catch {
+    saveMessage.value = 'Erreur de changement de statut'
+  }
+}
+
 async function sendEmail() {
   try { await checkin.sendEmail(participantId); saveMessage.value = 'Email envoye'; setTimeout(() => { saveMessage.value = '' }, 3000) }
   catch { saveMessage.value = "Erreur d'envoi" }
@@ -89,7 +100,14 @@ onMounted(async () => {
               <h2 class="text-lg font-semibold">{{ editData['prenom'] }} {{ editData['nom'] }}</h2>
               <p class="text-gray-500 text-sm">{{ (participant as any).qrCode }}</p>
             </div>
-            <Tag :value="statusLabel(participant.status)" :severity="statusSeverity(participant.status)" />
+            <div class="flex flex-col items-end gap-2">
+              <Tag :value="statusLabel(participant.status)" :severity="statusSeverity(participant.status)" />
+              <!-- Status toggle -->
+              <div class="flex gap-1">
+                <Button v-if="participant.status === 'ABSENT'" label="Marquer present" icon="pi pi-check" severity="success" size="small" @click="changeStatus('PRESENT')" />
+                <Button v-if="participant.status === 'PRESENT' || participant.status === 'SIGNED'" label="Marquer absent" icon="pi pi-times" severity="warn" size="small" outlined @click="changeStatus('ABSENT')" />
+              </div>
+            </div>
           </div>
 
           <!-- Signing progress -->
@@ -131,7 +149,7 @@ onMounted(async () => {
             <div v-for="field in fields" :key="field.key" class="grid grid-cols-3 gap-2 items-start">
               <label class="text-sm font-medium text-gray-600 pt-2">{{ field.label }}</label>
               <div class="col-span-2">
-                <template v-if="field.editable && !allSigned">
+                <template v-if="field.editable">
                   <select v-if="field.type === 'select'" v-model="editData[field.key]" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
                     <option value="">—</option>
                     <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
@@ -147,8 +165,8 @@ onMounted(async () => {
 
         <!-- Actions -->
         <div class="flex flex-wrap gap-3">
-          <Button v-if="!allSigned" label="Sauvegarder" icon="pi pi-check" :loading="isSaving" @click="save" />
-          <Button v-if="!allSigned" :label="`${allDocs.find(d => !signedDocIds.includes(d.id))?.signingLabel || 'Signer'} (${totalDocs - signedCount} restant${totalDocs - signedCount > 1 ? 's' : ''})`" icon="pi pi-pencil" severity="success" size="large" @click="router.push(`/signature/${participantId}`)" />
+          <Button label="Sauvegarder" icon="pi pi-check" :loading="isSaving" @click="save" />
+          <Button v-if="!allSigned && totalDocs > 0" :label="`${allDocs.find(d => !signedDocIds.includes(d.id))?.signingLabel || 'Signer'} (${totalDocs - signedCount} restant${totalDocs - signedCount > 1 ? 's' : ''})`" icon="pi pi-pencil" severity="success" size="large" @click="router.push(`/signature/${participantId}`)" />
           <Button v-if="allSigned && config.config?.email?.allowManualSend" label="Envoyer par e-mail" icon="pi pi-envelope" severity="secondary" @click="sendEmail" />
         </div>
 
