@@ -28,6 +28,12 @@ export class EventsController {
     return this.eventsService.getConfig(slug);
   }
 
+  @Get(':slug/operators')
+  @Public()
+  getOperators(@Param('slug') slug: string) {
+    return this.eventsService.getOperators(slug);
+  }
+
   @Post()
   @Roles(GlobalRole.SUPER_ADMIN)
   create(@Body() dto: CreateEventDto) {

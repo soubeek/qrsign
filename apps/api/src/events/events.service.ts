@@ -76,4 +76,46 @@ export class EventsService {
       email: emailConfig,
     };
   }
+
+  async getOperators(slug: string) {
+    const event = await this.prisma.event.findUnique({
+      where: { slug },
+      include: {
+        userAccess: {
+          include: {
+            user: {
+              select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+            },
+          },
+        },
+      },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+
+    // Include users assigned to this event + all SUPER_ADMINs
+    const assignedUsers = event.userAccess
+      .filter(ua => ua.user.isActive)
+      .map(ua => ({
+        id: ua.user.id,
+        firstName: ua.user.firstName,
+        lastName: ua.user.lastName,
+        email: ua.user.email,
+        role: ua.eventRole || ua.user.role,
+      }));
+
+    const superAdmins = await this.prisma.user.findMany({
+      where: { role: 'SUPER_ADMIN', isActive: true },
+      select: { id: true, firstName: true, lastName: true, email: true, role: true },
+    });
+
+    // Merge without duplicates
+    const allIds = new Set(assignedUsers.map(u => u.id));
+    for (const sa of superAdmins) {
+      if (!allIds.has(sa.id)) {
+        assignedUsers.push({ ...sa, role: sa.role });
+      }
+    }
+
+    return assignedUsers;
+  }
 }
