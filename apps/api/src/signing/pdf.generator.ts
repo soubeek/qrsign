@@ -64,6 +64,20 @@ export class PdfGenerator {
       }
     };
 
+    // Strip characters that WinAnsi (Helvetica) cannot encode
+    const sanitize = (t: string) => t.replace(/[^\x00-\xFF]/g, (ch) => {
+      // Replace common unicode with ASCII equivalents
+      const map: Record<string, string> = {
+        '\u2019': "'", '\u2018': "'", '\u201C': '"', '\u201D': '"',
+        '\u2013': '-', '\u2014': '--', '\u2026': '...', '\u00AB': '"', '\u00BB': '"',
+        '\u2611': '[x]', '\u2610': '[ ]', '\u2022': '-', '\u2023': '>',
+        '\u00E9': 'e', '\u00E8': 'e', '\u00EA': 'e', '\u00EB': 'e',
+        '\u00E0': 'a', '\u00E2': 'a', '\u00E7': 'c', '\u00EE': 'i', '\u00EF': 'i',
+        '\u00F4': 'o', '\u00F9': 'u', '\u00FB': 'u', '\u00FC': 'u',
+      };
+      return map[ch] || '';
+    });
+
     const drawText = (
       text: string,
       size: number,
@@ -71,8 +85,9 @@ export class PdfGenerator {
       color = rgb(0, 0, 0),
     ) => {
       const maxWidth = width - 2 * margin;
+      const safeText = sanitize(text);
       // Split by newlines first, then word-wrap each line
-      const paragraphs = text.split(/\r?\n/);
+      const paragraphs = safeText.split(/\r?\n/);
       for (let pi = 0; pi < paragraphs.length; pi++) {
         const para = paragraphs[pi];
         if (para.trim() === '') {
@@ -148,7 +163,7 @@ export class PdfGenerator {
     // Document title — positioned left, center or right
     const titlePos = documentDef.titlePosition || 'center';
     const titleSize = 18;
-    const titleText = documentDef.title || '';
+    const titleText = sanitize(documentDef.title || '');
     const titleWidth = fontBold.widthOfTextAtSize(titleText, titleSize);
     let titleX: number;
     if (titlePos === 'left') titleX = margin;
