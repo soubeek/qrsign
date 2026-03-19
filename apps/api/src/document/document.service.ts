@@ -60,6 +60,7 @@ export class DocumentService {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.signingLabel !== undefined && { signingLabel: dto.signingLabel }),
         ...(dto.declarationTemplate !== undefined && { declarationTemplate: dto.declarationTemplate }),
+        ...(dto.declarationAlign !== undefined && { declarationAlign: dto.declarationAlign }),
         ...(dto.noticeSections !== undefined && { noticeSections: dto.noticeSections }),
         ...(dto.pdfFooterText !== undefined && { pdfFooterText: dto.pdfFooterText }),
         ...(dto.signatureWidthMm !== undefined && { signatureWidthMm: dto.signatureWidthMm }),

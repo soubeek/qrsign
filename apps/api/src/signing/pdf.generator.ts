@@ -13,6 +13,7 @@ export class PdfGenerator {
       title: string;
       titlePosition?: string;
       declarationTemplate: string;
+      declarationAlign?: string;
       noticeSections: any;
       pdfFooterText: string;
       signatureWidthMm: number;
@@ -257,7 +258,7 @@ export class PdfGenerator {
       ' a ' +
       signedAt.toLocaleTimeString('fr-FR');
     declaration = declaration.replace('{signedAt}', dateStr);
-    drawText(declaration, 10);
+    drawText(declaration, 10, font, rgb(0, 0, 0), documentDef.declarationAlign || 'left');
     y -= 12;
 
     // Signature image

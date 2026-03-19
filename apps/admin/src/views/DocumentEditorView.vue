@@ -201,6 +201,33 @@ function insertBullet(sectionIndex: number) {
   requestAnimationFrame(() => { if (el) { el.focus(); el.selectionStart = el.selectionEnd = pos + prefix.length + 2 } })
 }
 
+function wrapDeclaration(marker: string) {
+  const el = (declTextarea.value as any)?.$el?.querySelector?.('textarea') || declTextarea.value
+  if (!el || !doc.value) return
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const text = doc.value.declarationTemplate || ''
+  const selected = text.substring(start, end)
+  if (selected) {
+    doc.value.declarationTemplate = text.substring(0, start) + marker + selected + marker + text.substring(end)
+  } else {
+    doc.value.declarationTemplate = text.substring(0, start) + marker + 'texte' + marker + text.substring(end)
+  }
+  requestAnimationFrame(() => { el.focus(); el.selectionStart = el.selectionEnd = start + marker.length + (selected || 'texte').length + marker.length })
+}
+
+function insertDeclarationBullet() {
+  const el = (declTextarea.value as any)?.$el?.querySelector?.('textarea') || declTextarea.value
+  if (!doc.value) return
+  const text = doc.value.declarationTemplate || ''
+  const pos = el?.selectionStart ?? text.length
+  const before = text.substring(0, pos)
+  const after = text.substring(pos)
+  const prefix = before.endsWith('\n') || before === '' ? '' : '\n'
+  doc.value.declarationTemplate = before + prefix + '- ' + after
+  requestAnimationFrame(() => { if (el) { el.focus(); el.selectionStart = el.selectionEnd = pos + prefix.length + 2 } })
+}
+
 function insertVariable(key: string) {
   if (!doc.value) return
   if (activeInsertTarget.value === 'declaration') {
@@ -408,12 +435,33 @@ watch(hasChanges, v => {
         <!-- Declaration -->
         <div class="bg-white rounded-xl shadow p-6">
           <h2 class="font-semibold mb-4 flex items-center gap-2"><i class="pi pi-align-left text-blue-600"></i> Declaration</h2>
-          <div class="flex flex-wrap gap-1 mb-2">
+
+          <!-- Alignment -->
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs text-gray-500">Alignement :</span>
+            <div class="flex gap-0.5">
+              <button v-for="al in [{v:'left',icon:'pi-align-left'},{v:'center',icon:'pi-align-center'},{v:'right',icon:'pi-align-right'},{v:'justify',icon:'pi-align-justify'}]" :key="al.v"
+                class="p-1.5 rounded border text-xs" :class="(doc.declarationAlign || 'left') === al.v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                @click="doc.declarationAlign = al.v"
+              ><i :class="'pi ' + al.icon"></i></button>
+            </div>
+          </div>
+
+          <!-- Formatting toolbar -->
+          <div class="flex flex-wrap items-center gap-1 mb-2 border-b pb-2">
+            <button class="px-2 py-1 rounded text-xs font-bold border border-gray-300 hover:bg-gray-100" title="Gras" @click="wrapDeclaration('**')">G</button>
+            <button class="px-2 py-1 rounded text-xs italic border border-gray-300 hover:bg-gray-100" title="Italique" @click="wrapDeclaration('*')">I</button>
+            <button class="px-2 py-1 rounded text-xs border border-gray-300 hover:bg-gray-100" title="Liste a puces" @click="insertDeclarationBullet">- Liste</button>
+            <div class="w-px h-5 bg-gray-300 mx-1"></div>
             <button v-for="f in fields" :key="f.key" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200" @click="activeInsertTarget='declaration'; insertVariable(f.key)">{{"{"}}{{f.key}}{{"}"}}</button>
             <button class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200" @click="activeInsertTarget='declaration'; insertVariable('signedAt')">{signedAt}</button>
           </div>
-          <Textarea ref="declTextarea" v-model="doc.declarationTemplate" rows="5" class="w-full font-mono text-sm" @focus="activeInsertTarget='declaration'" />
-          <div class="text-right text-xs mt-1" :class="declCharCount > 500 ? 'text-amber-600' : 'text-gray-400'">{{ declCharCount }} car.</div>
+
+          <textarea ref="declTextarea" v-model="doc.declarationTemplate" rows="5" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono" :style="{ textAlign: doc.declarationAlign || 'left' }" placeholder="Je soussigne(e) {prenom} {nom}..." @focus="activeInsertTarget='declaration'" />
+          <div class="flex justify-between mt-1">
+            <span class="text-xs text-gray-400">**gras** *italique* - liste</span>
+            <span class="text-xs" :class="declCharCount > 500 ? 'text-amber-600' : 'text-gray-400'">{{ declCharCount }} car.</span>
+          </div>
         </div>
 
         <!-- PDF settings -->

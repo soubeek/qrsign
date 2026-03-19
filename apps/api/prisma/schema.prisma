@@ -117,6 +117,7 @@ model DocumentDef {
   title               String @default("Consentement")
   signingLabel        String @default("Signer le document") @map("signing_label")
   declarationTemplate String @map("declaration_template")
+  declarationAlign    String @default("left") @map("declaration_align")
   noticeSections      Json   @default("[]") @map("notice_sections")
   pdfFooterText       String @default("") @map("pdf_footer_text")
   signatureWidthMm    Int    @default(75)  @map("signature_width_mm")

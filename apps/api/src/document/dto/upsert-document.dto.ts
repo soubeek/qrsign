@@ -4,6 +4,7 @@ export class UpsertDocumentDto {
   @IsString() @IsOptional() title?: string;
   @IsString() @IsOptional() signingLabel?: string;
   @IsString() @IsOptional() declarationTemplate?: string;
+  @IsString() @IsOptional() declarationAlign?: string;
   @IsOptional() noticeSections?: any;
   @IsString() @IsOptional() pdfFooterText?: string;
   @IsInt() @IsOptional() signatureWidthMm?: number;
