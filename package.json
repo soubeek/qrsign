@@ -1,0 +1,14 @@
+{
+  "name": "qrsign",
+  "private": true,
+  "scripts": {
+    "dev:api": "pnpm --filter @qrsign/api dev",
+    "dev:public": "pnpm --filter @qrsign/public dev",
+    "dev:admin": "pnpm --filter @qrsign/admin dev",
+    "dev": "pnpm --filter @qrsign/api dev & pnpm --filter @qrsign/public dev & pnpm --filter @qrsign/admin dev",
+    "build": "pnpm --filter @qrsign/api build && pnpm --filter @qrsign/public build && pnpm --filter @qrsign/admin build",
+    "db:migrate": "pnpm --filter @qrsign/api prisma migrate dev",
+    "db:seed": "pnpm --filter @qrsign/api prisma db seed",
+    "db:generate": "pnpm --filter @qrsign/api prisma generate"
+  }
+}

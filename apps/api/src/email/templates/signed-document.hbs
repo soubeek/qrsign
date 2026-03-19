@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; }
+    .header { background: #2563eb; color: #fff; padding: 24px; text-align: center; }
+    .header h1 { margin: 0; font-size: 22px; }
+    .body { padding: 24px; color: #333; line-height: 1.6; }
+    .body p { margin: 0 0 16px; }
+    .attachment-notice { background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .attachment-notice strong { color: #1d4ed8; }
+    .footer { padding: 16px 24px; background: #f9fafb; color: #6b7280; font-size: 12px; text-align: center; border-top: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>{{eventTitle}}</h1>
+    </div>
+    <div class="body">
+      <p>Bonjour {{participantName}},</p>
+      {{{bodyContent}}}
+      <div class="attachment-notice">
+        <strong>📎 Document signé en pièce jointe</strong>
+        <p style="margin: 8px 0 0; font-size: 14px;">Signé le {{signedAt}}</p>
+      </div>
+    </div>
+    <div class="footer">
+      <p>{{organizationName}}</p>
+    </div>
+  </div>
+</body>
+</html>
