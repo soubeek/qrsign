@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useCheckinStore } from '../stores/checkin.store'
 import { useConfigStore } from '../stores/config.store'
 import { useAuthStore } from '../stores/auth.store'
+import { useOfflineStore } from '../stores/offline.store'
 import { Html5Qrcode } from 'html5-qrcode'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
@@ -13,6 +14,7 @@ const router = useRouter()
 const checkin = useCheckinStore()
 const config = useConfigStore()
 const auth = useAuthStore()
+const offline = useOfflineStore()
 
 const scannerRef = ref<Html5Qrcode | null>(null)
 const scannerRunning = ref(false)
@@ -99,7 +101,22 @@ async function handleScan(qrCode: string) {
     await stopScanner(); loadStats()
     router.push(`/participant/${result.participant.id}`)
   } catch (err: any) {
-    if (err?.response?.status === 404) {
+    // Offline fallback: lookup in cached participants
+    if (!offline.isOnline || err?.code === 'ERR_NETWORK') {
+      const cached = offline.findByQrCode(qrCode)
+      if (cached) {
+        const data = cached.data as Record<string, any>
+        const name = `${data['prenom'] || ''} ${(data['nom'] || '').toUpperCase()}`.trim()
+        playSuccess(); vibrate(200)
+        lastScanResult.value = { name, time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), status: 'OFFLINE' }
+        // Queue the checkin for later sync
+        await offline.addToQueue({ type: 'CHECKIN', participantId: cached.id })
+        errorBanner.value = { type: 'info', message: `${name} — enregistre hors-ligne (sync au retour reseau)` }
+        isProcessing.value = false; refocus(); return
+      }
+      playError()
+      errorBanner.value = { type: 'info', message: 'Hors ligne — participant non trouve dans le cache' }
+    } else if (err?.response?.status === 404) {
       playError(); vibrate([100, 50, 100, 50, 100])
       errorBanner.value = { type: 'error', message: 'Badge non reconnu' }
     } else {
@@ -177,6 +194,8 @@ onMounted(async () => {
     scannerRunning.value = true
   } catch { cameraAvailable.value = false }
   refocus(); loadStats()
+  offline.init()
+  offline.refreshCache()
   clockInterval = setInterval(() => { clock.value = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }, 10000)
   statsInterval = setInterval(loadStats, 15000)
 })
@@ -199,6 +218,15 @@ onUnmounted(() => {
         <div class="flex-1 min-w-0">
           <h1 class="text-lg font-bold truncate">{{ config.config?.app?.emoji }} {{ config.config?.app?.title }}</h1>
         </div>
+        <!-- Online/Offline indicator -->
+        <div v-if="!offline.isOnline" class="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium">
+          <i class="pi pi-wifi-off"></i> Hors ligne
+          <span v-if="offline.hasPendingActions" class="ml-1">({{ offline.pendingActions.length }})</span>
+        </div>
+        <div v-else-if="offline.hasPendingActions" class="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium cursor-pointer" @click="offline.syncQueue()">
+          <i class="pi pi-sync"></i> Sync ({{ offline.pendingActions.length }})
+        </div>
+
         <Button icon="pi pi-search" label="Rechercher" severity="secondary" size="small" @click="openSearch" />
         <div v-if="stats" class="hidden sm:flex items-center gap-3 text-sm">
           <div class="text-center px-2"><div class="text-lg font-bold text-blue-600">{{ stats.present }}</div><div class="text-xs text-gray-400">Presents</div></div>
