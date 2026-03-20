@@ -13,6 +13,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        navigateFallbackDenylist: [/^\/admin/, /^\/api/],
         runtimeCaching: [
           {
             urlPattern: /\/api\/events\/.*\/config$/,
