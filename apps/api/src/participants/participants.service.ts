@@ -116,6 +116,42 @@ export class ParticipantsService {
     return this.prisma.participant.update({ where: { id }, data: { status: status as any } });
   }
 
+  async sendBulkEmails(slug: string, emailService: any) {
+    const event = await this.prisma.event.findUnique({
+      where: { slug },
+      include: {
+        fields: true,
+        participants: {
+          where: { status: 'SIGNED', emailSentAt: null },
+          include: { signatures: true },
+        },
+      },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+
+    const emailField = event.fields.find(f => f.isEmailField);
+    let sent = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (const p of event.participants) {
+      const data = p.data as Record<string, any>;
+      const email = emailField ? data[emailField.key] : null;
+      if (!email) { skipped++; continue; }
+      if (p.signatures.length === 0) { skipped++; continue; }
+
+      try {
+        await emailService.sendSignedDocument(p.id);
+        sent++;
+      } catch (e: any) {
+        const name = `${data['prenom'] || ''} ${data['nom'] || ''}`.trim();
+        errors.push(`${name}: ${e.message}`);
+      }
+    }
+
+    return { sent, skipped, errors, total: event.participants.length };
+  }
+
   async remove(id: string) {
     const participant = await this.prisma.participant.findUnique({ where: { id } });
     if (!participant) throw new NotFoundException('Participant not found');

@@ -160,6 +160,25 @@ async function createParticipant() {
   }
 }
 
+const isSendingBulk = ref(false)
+
+async function sendBulkEmails() {
+  if (!confirm('Envoyer les emails a tous les participants signes qui n\'ont pas encore recu d\'email ?')) return
+  isSendingBulk.value = true
+  try {
+    const { data } = await api.post(`/events/${slug}/participants/send-emails`)
+    toast.add({ severity: 'success', summary: `${data.sent} email(s) envoye(s), ${data.skipped} ignore(s)`, life: 5000 })
+    if (data.errors?.length > 0) {
+      toast.add({ severity: 'warn', summary: `${data.errors.length} erreur(s)`, detail: data.errors.join(', '), life: 10000 })
+    }
+    loadParticipants()
+  } catch {
+    toast.add({ severity: 'error', summary: 'Erreur d\'envoi en masse', life: 3000 })
+  } finally {
+    isSendingBulk.value = false
+  }
+}
+
 async function sendEmail(id: string) {
   try {
     await api.post(`/events/${slug}/participants/${id}/email`)
@@ -174,7 +193,10 @@ async function sendEmail(id: string) {
   <div>
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold">Participants</h1>
-      <Button label="Ajouter" icon="pi pi-plus" size="small" @click="openCreate" />
+      <div class="flex gap-2">
+        <Button label="Envoyer les emails" icon="pi pi-envelope" severity="secondary" size="small" :loading="isSendingBulk" @click="sendBulkEmails" />
+        <Button label="Ajouter" icon="pi pi-plus" size="small" @click="openCreate" />
+      </div>
     </div>
 
     <!-- Status filter tabs with counts -->

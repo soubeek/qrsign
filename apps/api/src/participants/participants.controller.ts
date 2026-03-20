@@ -85,6 +85,12 @@ export class ParticipantsController {
     return this.participantsService.updateStatus(id, status);
   }
 
+  @Post('send-emails')
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  async sendBulkEmails(@Param('slug') slug: string) {
+    return this.participantsService.sendBulkEmails(slug, this.emailService);
+  }
+
   @Post('import')
   @Roles('SUPER_ADMIN', 'ADMIN')
   @UseInterceptors(FileInterceptor('file'))
