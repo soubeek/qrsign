@@ -32,8 +32,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'QRSign - Accueil',
-        short_name: 'QRSign',
+        name: 'CheckFlow - Accueil',
+        short_name: 'CheckFlow',
         description: 'Application de check-in QR et signature',
         theme_color: '#2563eb',
         background_color: '#f9fafb',

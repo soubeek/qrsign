@@ -8,10 +8,10 @@ async function main() {
 
   // 1. Users
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@qrsign.local' },
+    where: { email: 'admin@checkflow.local' },
     update: {},
     create: {
-      email: 'admin@qrsign.local',
+      email: 'admin@checkflow.local',
       passwordHash: await bcrypt.hash('Admin1234!', ROUNDS),
       firstName: 'Super',
       lastName: 'Admin',
@@ -20,10 +20,10 @@ async function main() {
   });
 
   const gestionnaire = await prisma.user.upsert({
-    where: { email: 'gestionnaire@qrsign.local' },
+    where: { email: 'gestionnaire@checkflow.local' },
     update: {},
     create: {
-      email: 'gestionnaire@qrsign.local',
+      email: 'gestionnaire@checkflow.local',
       passwordHash: await bcrypt.hash('Gest1234!', ROUNDS),
       firstName: 'Marie',
       lastName: 'Gestionnaire',
@@ -32,10 +32,10 @@ async function main() {
   });
 
   const accueil = await prisma.user.upsert({
-    where: { email: 'accueil@qrsign.local' },
+    where: { email: 'accueil@checkflow.local' },
     update: {},
     create: {
-      email: 'accueil@qrsign.local',
+      email: 'accueil@checkflow.local',
       passwordHash: await bcrypt.hash('Acc1234!', ROUNDS),
       firstName: 'Jean',
       lastName: 'Accueil',
@@ -44,10 +44,10 @@ async function main() {
   });
 
   const observateur = await prisma.user.upsert({
-    where: { email: 'observateur@qrsign.local' },
+    where: { email: 'observateur@checkflow.local' },
     update: {},
     create: {
-      email: 'observateur@qrsign.local',
+      email: 'observateur@checkflow.local',
       passwordHash: await bcrypt.hash('Obs1234!', ROUNDS),
       firstName: 'Paul',
       lastName: 'Observateur',
@@ -145,7 +145,7 @@ async function main() {
         ]),
       ),
       pdfFooterText:
-        'Document g\u00e9n\u00e9r\u00e9 \u00e9lectroniquement par QRSign pour la Mairie de Saint-Paul \u2013 Ce document a valeur de preuve de consentement.',
+        'Document g\u00e9n\u00e9r\u00e9 \u00e9lectroniquement par CheckFlow pour la Mairie de Saint-Paul \u2013 Ce document a valeur de preuve de consentement.',
       signatureWidthMm: 75,
       signatureHeightMm: 28,
       displayOrder: 0,

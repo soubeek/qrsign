@@ -2,8 +2,8 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: qrsign
-      POSTGRES_USER: qrsign
+      POSTGRES_DB: checkflow
+      POSTGRES_USER: checkflow
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -18,7 +18,7 @@ services:
     volumes:
       - pdf_data:/data/pdfs
     environment:
-      DATABASE_URL: postgresql://qrsign:${POSTGRES_PASSWORD}@postgres:5432/qrsign
+      DATABASE_URL: postgresql://checkflow:${POSTGRES_PASSWORD}@postgres:5432/checkflow
       PDF_STORAGE_PATH: /data/pdfs
       EMAIL_ENCRYPTION_KEY: ${EMAIL_ENCRYPTION_KEY}
       JWT_SECRET: ${JWT_SECRET}
@@ -41,15 +41,15 @@ services:
     restart: always
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.qrsign.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.qrsign.entrypoints=https"
-      - "traefik.http.routers.qrsign.tls=true"
-      - "traefik.http.services.qrsign.loadbalancer.server.port=80"
-      - "traefik.http.routers.qrsign-http.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.qrsign-http.entrypoints=http"
-      - "traefik.http.routers.qrsign-http.middlewares=qrsign-https-redirect"
-      - "traefik.http.middlewares.qrsign-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.qrsign-https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.checkflow.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.checkflow.entrypoints=https"
+      - "traefik.http.routers.checkflow.tls=true"
+      - "traefik.http.services.checkflow.loadbalancer.server.port=80"
+      - "traefik.http.routers.checkflow-http.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.checkflow-http.entrypoints=http"
+      - "traefik.http.routers.checkflow-http.middlewares=checkflow-https-redirect"
+      - "traefik.http.middlewares.checkflow-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.checkflow-https-redirect.redirectscheme.permanent=true"
     networks:
       - internal
       - web

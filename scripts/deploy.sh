@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== QRSign Production Deployment ==="
+echo "=== CheckFlow Production Deployment ==="
 
 # Check .env exists
 if [ ! -f .env ]; then

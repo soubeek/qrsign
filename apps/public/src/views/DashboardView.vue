@@ -126,7 +126,7 @@ onUnmounted(() => {
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-800">
-            {{ configStore.config?.app?.emoji }} {{ configStore.config?.app?.title ?? 'QRSign' }}
+            {{ configStore.config?.app?.emoji }} {{ configStore.config?.app?.title ?? 'CheckFlow' }}
           </h1>
           <p class="text-sm text-gray-500">{{ configStore.config?.app?.subtitle }}</p>
         </div>

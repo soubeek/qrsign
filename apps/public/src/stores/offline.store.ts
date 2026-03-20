@@ -13,7 +13,7 @@ interface QueuedAction {
   timestamp: number
 }
 
-const DB_NAME = 'qrsign-offline'
+const DB_NAME = 'checkflow-offline'
 const STORE_PARTICIPANTS = 'participants'
 const STORE_QUEUE = 'queue'
 
@@ -21,7 +21,7 @@ export const useOfflineStore = defineStore('offline', () => {
   const isOnline = ref(navigator.onLine)
   const cachedParticipants = ref<any[]>([])
   const pendingActions = ref<QueuedAction[]>([])
-  const lastSync = ref<string | null>(localStorage.getItem('qrsign_last_sync'))
+  const lastSync = ref<string | null>(localStorage.getItem('checkflow_last_sync'))
   const isSyncing = ref(false)
 
   const hasPendingActions = computed(() => pendingActions.value.length > 0)
@@ -56,7 +56,7 @@ export const useOfflineStore = defineStore('offline', () => {
       }
       cachedParticipants.value = participants
       lastSync.value = new Date().toISOString()
-      localStorage.setItem('qrsign_last_sync', lastSync.value)
+      localStorage.setItem('checkflow_last_sync', lastSync.value)
       db.close()
     } catch {}
   }

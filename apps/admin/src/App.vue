@@ -52,7 +52,7 @@ async function logout() {
       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     >
       <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-        <h1 class="text-lg font-bold">QRSign Admin</h1>
+        <h1 class="text-lg font-bold">CheckFlow Admin</h1>
         <button class="lg:hidden text-gray-400 hover:text-white" @click="sidebarOpen = false">
           <i class="pi pi-times"></i>
         </button>

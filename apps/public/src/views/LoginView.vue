@@ -81,7 +81,7 @@ async function handleLogin() {
   <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
     <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">QRSign</h1>
+        <h1 class="text-3xl font-bold text-gray-800">CheckFlow</h1>
         <p class="text-gray-500 mt-2">Qui etes-vous ?</p>
       </div>
 

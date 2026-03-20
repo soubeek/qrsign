@@ -5,7 +5,7 @@ import * as cookieParser from 'cookie-parser';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
-describe('QRSign API (e2e)', () => {
+describe('CheckFlow API (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let adminToken: string;
@@ -33,17 +33,17 @@ describe('QRSign API (e2e)', () => {
 
   describe('Auth', () => {
     it('POST /api/auth/login — valid credentials', async () => {
-      const user = await prisma.user.findUnique({ where: { email: 'admin@qrsign.local' } });
+      const user = await prisma.user.findUnique({ where: { email: 'admin@checkflow.local' } });
       console.log('DB USER:', user?.email, 'active:', user?.isActive, 'hash:', user?.passwordHash?.substring(0, 15));
 
       const res = await request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'admin@qrsign.local', password: 'Admin1234!' });
+        .send({ email: 'admin@checkflow.local', password: 'Admin1234!' });
 
       console.log('LOGIN:', res.status, JSON.stringify(res.body).substring(0, 150));
       expect(res.status).toBe(201);
       expect(res.body.accessToken).toBeDefined();
-      expect(res.body.user.email).toBe('admin@qrsign.local');
+      expect(res.body.user.email).toBe('admin@checkflow.local');
       expect(res.body.user.role).toBe('SUPER_ADMIN');
       adminToken = res.body.accessToken;
     });
@@ -51,7 +51,7 @@ describe('QRSign API (e2e)', () => {
     it('POST /api/auth/login — operator', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'accueil@qrsign.local', password: 'Acc1234!' })
+        .send({ email: 'accueil@checkflow.local', password: 'Acc1234!' })
         .expect(201);
 
       operatorToken = res.body.accessToken;
@@ -61,14 +61,14 @@ describe('QRSign API (e2e)', () => {
     it('POST /api/auth/login — invalid password → 401', async () => {
       await request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'admin@qrsign.local', password: 'wrong' })
+        .send({ email: 'admin@checkflow.local', password: 'wrong' })
         .expect(401);
     });
 
     it('POST /api/auth/login — missing fields → 400', async () => {
       await request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'admin@qrsign.local' })
+        .send({ email: 'admin@checkflow.local' })
         .expect(400);
     });
 
@@ -78,7 +78,7 @@ describe('QRSign API (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body.email).toBe('admin@qrsign.local');
+      expect(res.body.email).toBe('admin@checkflow.local');
       expect(res.body.passwordHash).toBeUndefined();
     });
 

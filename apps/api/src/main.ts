@@ -29,6 +29,6 @@ async function bootstrap() {
   });
 
   await app.listen(3000, '0.0.0.0');
-  Logger.log(`QRSign API running on port 3000 (${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'})`, 'Bootstrap');
+  Logger.log(`CheckFlow API running on port 3000 (${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'})`, 'Bootstrap');
 }
 bootstrap();
