@@ -7,3 +7,4 @@ data/
 postgres_data/
 .turbo/
 pnpm-lock.yaml
+backups/

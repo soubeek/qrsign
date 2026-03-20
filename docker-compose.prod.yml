@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: qrsign
+      POSTGRES_USER: qrsign
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - internal
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    volumes:
+      - pdf_data:/data/pdfs
+    environment:
+      DATABASE_URL: postgresql://qrsign:${POSTGRES_PASSWORD}@postgres:5432/qrsign
+      PDF_STORAGE_PATH: /data/pdfs
+      EMAIL_ENCRYPTION_KEY: ${EMAIL_ENCRYPTION_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-7d}
+      CORS_ORIGINS: https://${DOMAIN}
+      NODE_ENV: production
+    depends_on:
+      - postgres
+    restart: always
+    networks:
+      - internal
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    depends_on:
+      - api
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qrsign.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.qrsign.entrypoints=https"
+      - "traefik.http.routers.qrsign.tls=true"
+      - "traefik.http.services.qrsign.loadbalancer.server.port=80"
+      - "traefik.http.routers.qrsign-http.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.qrsign-http.entrypoints=http"
+      - "traefik.http.routers.qrsign-http.middlewares=qrsign-https-redirect"
+      - "traefik.http.middlewares.qrsign-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.qrsign-https-redirect.redirectscheme.permanent=true"
+    networks:
+      - internal
+      - web
+
+volumes:
+  postgres_data:
+  pdf_data:
+
+networks:
+  internal:
+  web:
+    external: true

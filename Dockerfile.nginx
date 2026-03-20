@@ -1,0 +1,24 @@
+# Stage 1: Build public frontend
+FROM node:20-alpine AS public-builder
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+COPY apps/public/package.json apps/public/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile || pnpm install
+COPY apps/public/ .
+RUN pnpm build
+
+# Stage 2: Build admin frontend
+FROM node:20-alpine AS admin-builder
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+COPY apps/admin/package.json apps/admin/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile || pnpm install
+COPY apps/admin/ .
+RUN pnpm build
+
+# Stage 3: Nginx with both frontends
+FROM nginx:alpine
+COPY --from=public-builder /app/dist /usr/share/nginx/html/public
+COPY --from=admin-builder /app/dist /usr/share/nginx/html/admin
+COPY nginx/nginx.prod.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
