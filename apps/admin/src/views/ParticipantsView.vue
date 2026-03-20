@@ -224,6 +224,18 @@ async function sendEmail(id: string) {
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
         </template>
       </Column>
+      <Column header="Email" :sortable="true" field="emailSentAt" style="width: 100px">
+        <template #body="{ data }">
+          <div v-if="data.emailSentAt" class="flex items-center gap-1 text-green-600 text-xs" :title="new Date(data.emailSentAt).toLocaleString('fr-FR')">
+            <i class="pi pi-check-circle"></i>
+            {{ new Date(data.emailSentAt).toLocaleDateString('fr-FR') }}
+          </div>
+          <div v-else-if="data.status === 'SIGNED'" class="text-xs text-amber-500">
+            <i class="pi pi-clock"></i> Non envoye
+          </div>
+          <span v-else class="text-xs text-gray-300">—</span>
+        </template>
+      </Column>
       <Column header="Actions" style="width: 200px">
         <template #body="{ data }">
           <div class="flex gap-1">
