@@ -32,6 +32,8 @@ const participants = ref<ParticipantRow[]>([])
 const searchQuery = ref('')
 const activeTab = ref('all')
 const isLoadingList = ref(false)
+const currentPage = ref(1)
+const perPage = 20
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
@@ -43,9 +45,15 @@ const signProgress = computed(() => {
 const filteredParticipants = computed(() => {
   let list = participants.value
   if (activeTab.value === 'absent') list = list.filter((p) => p.status === 'ABSENT')
-  else if (activeTab.value === 'present') list = list.filter((p) => p.status === 'PRESENT' || p.status === 'SIGNED') // SIGNED implies PRESENT
+  else if (activeTab.value === 'present') list = list.filter((p) => p.status === 'PRESENT' || p.status === 'SIGNED')
   else if (activeTab.value === 'signed') list = list.filter((p) => p.status === 'SIGNED')
   return list
+})
+
+const totalPages = computed(() => Math.ceil(filteredParticipants.value.length / perPage))
+const paginatedParticipants = computed(() => {
+  const start = (currentPage.value - 1) * perPage
+  return filteredParticipants.value.slice(start, start + perPage)
 })
 
 function statusSeverity(status: ParticipantStatus): 'danger' | 'warn' | 'success' {
@@ -72,7 +80,7 @@ async function loadData() {
   try {
     const [s, p] = await Promise.all([
       checkinStore.getStats(),
-      checkinStore.getParticipants({ search: searchQuery.value || undefined, limit: 50 }),
+      checkinStore.getParticipants({ search: searchQuery.value || undefined, limit: 500 }),
     ])
     stats.value = s
     participants.value = p.participants ?? p.data ?? p
@@ -85,9 +93,10 @@ async function searchParticipants() {
   isLoadingList.value = true
   try {
     const p = await checkinStore.getParticipants({
-      search: searchQuery.value || undefined, limit: 50,
+      search: searchQuery.value || undefined, limit: 500,
     })
     participants.value = p.participants ?? p.data ?? p
+    currentPage.value = 1
   } finally {
     isLoadingList.value = false
   }
@@ -200,14 +209,14 @@ onUnmounted(() => {
             ]" :key="tab.v"
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
               :class="activeTab === tab.v ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-              @click="activeTab = tab.v"
+              @click="activeTab = tab.v; currentPage = 1"
             >{{ tab.l }} ({{ tab.c }})</button>
           </div>
         </div>
 
         <div class="divide-y divide-gray-100">
           <div
-            v-for="p in filteredParticipants"
+            v-for="p in paginatedParticipants"
             :key="p.id"
             class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition-colors"
             @click="goToParticipant(p.id)"
@@ -236,6 +245,26 @@ onUnmounted(() => {
             class="px-4 py-12 text-center text-gray-400"
           >
             Aucun participant trouve
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="px-4 py-3 border-t flex items-center justify-between text-sm">
+          <span class="text-gray-500">
+            {{ (currentPage - 1) * perPage + 1 }}-{{ Math.min(currentPage * perPage, filteredParticipants.length) }} sur {{ filteredParticipants.length }}
+          </span>
+          <div class="flex gap-1">
+            <button class="px-3 py-1 rounded border border-gray-200 hover:bg-gray-100 disabled:opacity-30" :disabled="currentPage <= 1" @click="currentPage--">
+              <i class="pi pi-chevron-left text-xs"></i>
+            </button>
+            <button v-for="p in totalPages" :key="p"
+              class="px-3 py-1 rounded border text-xs"
+              :class="currentPage === p ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 hover:bg-gray-100'"
+              @click="currentPage = p"
+            >{{ p }}</button>
+            <button class="px-3 py-1 rounded border border-gray-200 hover:bg-gray-100 disabled:opacity-30" :disabled="currentPage >= totalPages" @click="currentPage++">
+              <i class="pi pi-chevron-right text-xs"></i>
+            </button>
           </div>
         </div>
       </div>
