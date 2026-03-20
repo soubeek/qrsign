@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class CheckinService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async scan(slug: string, qrCode: string) {
     const event = await this.prisma.event.findUnique({
@@ -32,6 +33,10 @@ export class CheckinService {
       });
       participant.status = 'PRESENT';
     }
+
+    const data = participant.data as Record<string, any>;
+    const name = `${data['prenom'] || ''} ${(data['nom'] || '').toUpperCase()}`.trim();
+    this.audit.log({ action: 'SCAN', eventSlug: slug, targetId: participant.id, targetLabel: name, details: qrCode });
 
     return { participant, fieldDefs: event.fields, documents: event.documents };
   }

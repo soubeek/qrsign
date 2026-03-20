@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { PdfGenerator } from './pdf.generator';
+import { AuditService } from '../audit/audit.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -14,6 +15,7 @@ export class SigningService {
     private prisma: PrismaService,
     private config: ConfigService,
     private pdfGenerator: PdfGenerator,
+    private audit: AuditService,
   ) {
     this.pdfStoragePath = this.config.get('PDF_STORAGE_PATH') || './data/pdfs';
   }
@@ -68,6 +70,10 @@ export class SigningService {
         pdfPath,
       },
     });
+
+    const data = participant.data as Record<string, any>;
+    const participantName = `${data['prenom'] || ''} ${(data['nom'] || '').toUpperCase()}`.trim();
+    this.audit.log({ action: 'SIGN', eventSlug, targetId: participantId, targetLabel: participantName, details: `doc: ${documentDef.title}` });
 
     // Check if all required documents are now signed
     const requiredDocIds = event.documents.map(d => d.id);

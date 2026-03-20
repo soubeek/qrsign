@@ -44,6 +44,56 @@ export class EventsService {
     return this.prisma.event.update({ where: { slug }, data: dto });
   }
 
+  async clone(slug: string) {
+    const event = await this.prisma.event.findUnique({
+      where: { slug },
+      include: { fields: true, documents: true },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+
+    const newSlug = `${slug}-copie-${Date.now().toString(36)}`;
+    const newEvent = await this.prisma.event.create({
+      data: {
+        slug: newSlug,
+        title: `${event.title} (copie)`,
+        subtitle: event.subtitle,
+        logoEmoji: event.logoEmoji,
+        entitySingular: event.entitySingular,
+        entityPlural: event.entityPlural,
+        displayNameTpl: event.displayNameTpl,
+        searchFields: event.searchFields,
+      },
+    });
+
+    // Clone fields
+    for (const f of event.fields) {
+      await this.prisma.fieldDef.create({
+        data: {
+          eventId: newEvent.id, key: f.key, label: f.label, type: f.type,
+          options: f.options, editable: f.editable, required: f.required,
+          displayInList: f.displayInList, displayOrder: f.displayOrder,
+          isQrField: f.isQrField, isEmailField: f.isEmailField,
+        },
+      });
+    }
+
+    // Clone documents (without signatures)
+    for (const d of event.documents) {
+      await this.prisma.documentDef.create({
+        data: {
+          eventId: newEvent.id, title: d.title, signingLabel: d.signingLabel,
+          declarationTemplate: d.declarationTemplate, declarationAlign: d.declarationAlign,
+          noticeSections: d.noticeSections as any, pdfFooterText: d.pdfFooterText,
+          signatureWidthMm: d.signatureWidthMm, signatureHeightMm: d.signatureHeightMm,
+          logoPosition: d.logoPosition, titlePosition: d.titlePosition,
+          displayOrder: d.displayOrder, required: d.required,
+        },
+      });
+    }
+
+    return newEvent;
+  }
+
   async remove(slug: string) {
     const event = await this.prisma.event.findUnique({ where: { slug } });
     if (!event) throw new NotFoundException('Event not found');

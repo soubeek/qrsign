@@ -10,8 +10,10 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import ProgressBar from 'primevue/progressbar'
 import api from '../lib/axios'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
+const toast = useToast()
 const eventsStore = useEventsStore()
 const showCreate = ref(false)
 const newEvent = ref({ title: '', subtitle: '', logoEmoji: '', entitySingular: 'participant', entityPlural: 'participants' })
@@ -39,6 +41,14 @@ async function createEvent() {
 }
 
 function goToEvent(e: any) { router.push(`/events/${e.data.slug}`) }
+
+async function cloneEvent(slug: string) {
+  try {
+    const { data } = await api.post(`/events/${slug}/clone`)
+    eventsStore.events.push(data)
+    toast.add({ severity: 'success', summary: `Evenement duplique : ${data.title}`, life: 3000 })
+  } catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
+}
 
 function signProgress(slug: string): number {
   const s = eventStats.value[slug]
@@ -91,6 +101,11 @@ function signProgress(slug: string): number {
       <Column header="Statut">
         <template #body="{ data }">
           <Tag :value="data.isActive ? 'Actif' : 'Inactif'" :severity="data.isActive ? 'success' : 'secondary'" />
+        </template>
+      </Column>
+      <Column header="" style="width: 60px">
+        <template #body="{ data }">
+          <Button icon="pi pi-copy" severity="secondary" text size="small" title="Dupliquer" @click.stop="cloneEvent(data.slug)" />
         </template>
       </Column>
     </DataTable>

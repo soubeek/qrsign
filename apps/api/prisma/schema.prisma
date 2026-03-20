@@ -195,3 +195,22 @@ model ParticipantSignature {
   @@unique([participantId, documentDefId])
   @@map("participant_signatures")
 }
+
+// Audit log — trace toutes les actions critiques
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String                          // LOGIN, SCAN, SIGN, EXPORT, STATUS_CHANGE, etc.
+  userId      String?  @map("user_id")
+  userEmail   String?  @map("user_email")
+  eventSlug   String?  @map("event_slug")
+  targetId    String?  @map("target_id")      // participant ID, document ID, etc.
+  targetLabel String?  @map("target_label")   // participant name, document title, etc.
+  details     String?                         // extra info (IP, status change, etc.)
+  ip          String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([action])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

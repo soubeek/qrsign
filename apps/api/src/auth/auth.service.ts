@@ -6,12 +6,15 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Response } from 'express';
 
+import { AuditService } from '../audit/audit.service';
+
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private audit: AuditService,
   ) {}
 
   async login(email: string, password: string, res: Response) {
@@ -28,6 +31,8 @@ export class AuthService {
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     await this.storeRefreshToken(user.id, tokens.refreshToken);
     this.setRefreshCookie(res, tokens.refreshToken);
+
+    this.audit.log({ action: 'LOGIN', userId: user.id, userEmail: user.email });
 
     const { passwordHash, ...userWithoutPassword } = user;
     return {

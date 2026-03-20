@@ -81,6 +81,13 @@ async function logout() {
           <i class="pi pi-users"></i> Utilisateurs
         </router-link>
 
+        <router-link v-if="auth.hasRole('SUPER_ADMIN')" to="/audit"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+          active-class="bg-gray-800 !text-white"
+        >
+          <i class="pi pi-history"></i> Audit
+        </router-link>
+
         <!-- Event sub-nav -->
         <template v-if="isInEvent">
           <div class="mt-4 mb-2 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Evenement</div>

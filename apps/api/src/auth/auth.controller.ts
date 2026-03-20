@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { IsEmail, IsString } from 'class-validator';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -19,14 +20,15 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } }) // 5 login attempts per minute
   @Post('login')
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     return this.authService.login(dto.email, dto.password, res);
   }
 
   @Public()
-  @UseGuards(AuthGuard('jwt-refresh'))
   @Post('refresh')
+  @UseGuards(AuthGuard('jwt-refresh'))
   async refresh(
     @CurrentUser() user: { userId: string; refreshToken: string },
     @Res({ passthrough: true }) res: Response,

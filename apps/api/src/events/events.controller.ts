@@ -46,6 +46,12 @@ export class EventsController {
     return this.eventsService.update(slug, dto);
   }
 
+  @Post(':slug/clone')
+  @Roles(GlobalRole.SUPER_ADMIN)
+  clone(@Param('slug') slug: string) {
+    return this.eventsService.clone(slug);
+  }
+
   @Delete(':slug')
   @Roles(GlobalRole.SUPER_ADMIN)
   remove(@Param('slug') slug: string) {
