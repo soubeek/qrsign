@@ -16,6 +16,8 @@ const router = useRouter()
 const toast = useToast()
 const eventsStore = useEventsStore()
 const showCreate = ref(false)
+const showDeleteEvent = ref(false)
+const deleteEventTarget = ref<any>(null)
 const newEvent = ref({ title: '', subtitle: '', logoEmoji: '', entitySingular: 'participant', entityPlural: 'participants' })
 const eventStats = ref<Record<string, any>>({})
 
@@ -41,6 +43,24 @@ async function createEvent() {
 }
 
 function goToEvent(e: any) { router.push(`/events/${e.data.slug}`) }
+
+function confirmDeleteEvent(event: any) {
+  deleteEventTarget.value = event
+  showDeleteEvent.value = true
+}
+
+async function executeDeleteEvent() {
+  if (!deleteEventTarget.value) return
+  try {
+    await eventsStore.deleteEvent(deleteEventTarget.value.slug)
+    toast.add({ severity: 'success', summary: 'Evenement supprime', life: 2000 })
+  } catch {
+    toast.add({ severity: 'error', summary: 'Erreur', life: 3000 })
+  } finally {
+    showDeleteEvent.value = false
+    deleteEventTarget.value = null
+  }
+}
 
 async function cloneEvent(slug: string) {
   try {
@@ -103,9 +123,12 @@ function signProgress(slug: string): number {
           <Tag :value="data.isActive ? 'Actif' : 'Inactif'" :severity="data.isActive ? 'success' : 'secondary'" />
         </template>
       </Column>
-      <Column header="" style="width: 60px">
+      <Column header="" style="width: 100px">
         <template #body="{ data }">
-          <Button icon="pi pi-copy" severity="secondary" text size="small" title="Dupliquer" @click.stop="cloneEvent(data.slug)" />
+          <div class="flex gap-1">
+            <Button icon="pi pi-copy" severity="secondary" text size="small" title="Dupliquer" @click.stop="cloneEvent(data.slug)" />
+            <Button icon="pi pi-trash" severity="danger" text size="small" title="Supprimer" @click.stop="confirmDeleteEvent(data)" />
+          </div>
         </template>
       </Column>
     </DataTable>
@@ -123,6 +146,17 @@ function signProgress(slug: string): number {
       <template #footer>
         <Button label="Annuler" severity="secondary" text @click="showCreate = false" />
         <Button label="Creer" icon="pi pi-check" @click="createEvent" :disabled="!newEvent.title" />
+      </template>
+    </Dialog>
+
+    <Dialog v-model:visible="showDeleteEvent" header="Supprimer l'evenement" modal class="w-full max-w-sm">
+      <div v-if="deleteEventTarget" class="p-2">
+        <p>Supprimer <strong>{{ deleteEventTarget.title }}</strong> ?</p>
+        <p class="text-sm text-red-600 mt-2">Cette action supprimera tous les participants, documents et signatures associes. Elle est irreversible.</p>
+      </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" text @click="showDeleteEvent = false" />
+        <Button label="Supprimer" icon="pi pi-trash" severity="danger" @click="executeDeleteEvent" />
       </template>
     </Dialog>
   </div>
