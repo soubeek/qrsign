@@ -550,7 +550,7 @@ watch(hasChanges, v => {
     </Dialog>
 
     <!-- Document assignments dialog -->
-    <Dialog v-model:visible="showAssignments" header="Assigner le document aux participants" modal class="w-full max-w-lg" :style="{ maxHeight: '80vh' }">
+    <Dialog v-model:visible="showAssignments" header="Assigner le document aux participants" modal class="w-full max-w-lg">
       <div class="p-2">
         <p class="text-sm text-gray-500 mb-3">
           Si aucun participant n'est selectionne, <strong>tous</strong> les participants devront signer ce document.
