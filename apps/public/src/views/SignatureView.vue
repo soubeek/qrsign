@@ -155,7 +155,7 @@ onMounted(async () => {
         <Button label="Voir la confirmation" class="mt-4" @click="router.push(`/confirmation/${participantId}`)" />
       </div>
 
-      <div v-else class="max-w-3xl mx-auto p-4 space-y-4">
+      <div v-else class="max-w-3xl mx-auto p-4 pb-8 space-y-4">
         <!-- Zoom controls -->
         <div class="flex items-center justify-end gap-1">
           <button
