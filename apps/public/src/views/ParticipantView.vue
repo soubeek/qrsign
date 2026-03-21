@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCheckinStore } from '../stores/checkin.store'
 import { useConfigStore } from '../stores/config.store'
+import { useToast } from 'primevue/usetoast'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import ProgressBar from 'primevue/progressbar'
@@ -12,10 +13,10 @@ const route = useRoute()
 const router = useRouter()
 const checkin = useCheckinStore()
 const config = useConfigStore()
+const toast = useToast()
 const participantId = route.params.id as string
 const editData = ref<Record<string, any>>({})
 const isSaving = ref(false)
-const saveMessage = ref('')
 const qrCodeUrl = ref<string | null>(null)
 const activeTab = ref('infos')
 
@@ -38,14 +39,13 @@ function statusLabel(s: string) { return s === 'ABSENT' ? 'Absent' : s === 'PRES
 function statusColor(s: string) { return s === 'ABSENT' ? '#ef4444' : s === 'PRESENT' ? '#f59e0b' : '#22c55e' }
 
 async function save() {
-  isSaving.value = true; saveMessage.value = ''
+  isSaving.value = true
   try {
     await checkin.updateParticipant(participantId, editData.value)
     await checkin.loadParticipant(participantId)
     if (participant.value?.data) editData.value = { ...(participant.value.data as Record<string, any>) }
-    saveMessage.value = 'Sauvegarde'
-    setTimeout(() => { saveMessage.value = '' }, 2000)
-  } catch { saveMessage.value = 'Erreur' }
+    toast.add({ severity: 'success', summary: 'Sauvegarde', life: 2000 })
+  } catch { toast.add({ severity: 'error', summary: 'Erreur de sauvegarde', life: 3000 }) }
   finally { isSaving.value = false }
 }
 
@@ -54,21 +54,20 @@ async function downloadPdf(docId: string) {
     const res = await api.get(`/events/${config.slug}/participants/${participantId}/pdf/${docId}`, { responseType: 'blob' })
     const url = URL.createObjectURL(res.data)
     window.open(url, '_blank')
-  } catch { saveMessage.value = 'Erreur de telechargement' }
+  } catch { toast.add({ severity: 'error', summary: 'Erreur de telechargement', life: 3000 }) }
 }
 
 async function changeStatus(status: string) {
   try {
     await api.post(`/events/${config.slug}/participants/${participantId}/status`, { status })
     await checkin.loadParticipant(participantId)
-    saveMessage.value = status === 'PRESENT' ? 'Marque present' : 'Marque absent'
-    setTimeout(() => { saveMessage.value = '' }, 2000)
-  } catch { saveMessage.value = 'Erreur' }
+    toast.add({ severity: 'success', summary: status === 'PRESENT' ? 'Marque present' : 'Marque absent', life: 2000 })
+  } catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
 }
 
 async function sendEmail() {
-  try { await checkin.sendEmail(participantId); saveMessage.value = 'Email envoye'; setTimeout(() => { saveMessage.value = '' }, 3000) }
-  catch { saveMessage.value = "Erreur d'envoi" }
+  try { await checkin.sendEmail(participantId); toast.add({ severity: 'success', summary: 'Email envoye', life: 3000 }) }
+  catch { toast.add({ severity: 'error', summary: "Erreur d'envoi", life: 3000 }) }
 }
 
 onMounted(async () => {
@@ -245,11 +244,6 @@ onMounted(async () => {
           </button>
         </div>
       </div>
-
-      <!-- Save feedback (visible on both tabs) -->
-      <div v-if="saveMessage" class="max-w-2xl mx-auto mx-3 mb-3 p-3 rounded-lg text-sm text-center"
-        :class="saveMessage.includes('Erreur') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'"
-      >{{ saveMessage }}</div>
 
       </div><!-- end scrollable -->
     </template>
