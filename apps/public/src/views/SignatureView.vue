@@ -21,12 +21,7 @@ const errorMsg = ref('')
 const showConfirm = ref(false)
 const textZoom = ref(100)
 const currentDocIndex = ref(0)
-const fullscreenSignature = ref(false)
 
-function toggleSignatureFullscreen() {
-  fullscreenSignature.value = !fullscreenSignature.value
-  nextTick(() => resizeCanvas())
-}
 
 
 const participant = computed(() => checkin.current)
@@ -201,22 +196,17 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Signature pad — normal mode (bottom fixed) -->
-    <div v-if="currentDoc && !fullscreenSignature" class="shrink-0 border-t shadow-[0_-2px_10px_rgba(0,0,0,0.08)]" style="background-color: white;">
+    <!-- Signature pad — fixed bottom -->
+    <div v-if="currentDoc" class="shrink-0 border-t shadow-[0_-2px_10px_rgba(0,0,0,0.08)]" style="background-color: white;">
       <div class="max-w-3xl mx-auto p-3">
         <div class="flex items-center justify-between mb-2">
           <h3 class="font-semibold text-xs text-gray-500 uppercase tracking-wide">{{ currentDoc?.signingLabel || 'Signature' }}</h3>
-          <div class="flex items-center gap-3">
-            <button class="text-xs text-gray-400 flex items-center gap-1" @click="clear">
-              <i class="pi pi-trash text-[10px]"></i> Effacer
-            </button>
-            <button class="text-xs flex items-center gap-1" style="color: #2563eb;" @click="toggleSignatureFullscreen">
-              <i class="pi pi-window-maximize text-[10px]"></i> Agrandir
-            </button>
-          </div>
+          <button class="text-xs text-gray-400 flex items-center gap-1" @click="clear">
+            <i class="pi pi-trash text-[10px]"></i> Effacer
+          </button>
         </div>
         <div class="border-2 border-dashed border-gray-300 rounded-lg bg-white relative" style="touch-action: none;">
-          <canvas ref="canvasRef" class="w-full" style="height: 160px; display: block;" />
+          <canvas ref="canvasRef" class="w-full" style="height: 200px; display: block;" />
           <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span class="text-gray-300 text-sm">Signez ici</span>
           </div>
@@ -233,41 +223,6 @@ onMounted(async () => {
         </button>
       </div>
     </div>
-
-    <!-- Signature pad — fullscreen mode (teleported to body) -->
-    <Teleport to="body">
-      <div v-if="currentDoc && fullscreenSignature" class="sig-fullscreen">
-        <div class="flex-1 flex flex-col p-4">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="font-semibold text-xs text-gray-500 uppercase tracking-wide">{{ currentDoc?.signingLabel || 'Signature' }}</h3>
-            <div class="flex items-center gap-3">
-              <button class="text-xs text-gray-400 flex items-center gap-1" @click="clear">
-                <i class="pi pi-trash text-[10px]"></i> Effacer
-              </button>
-              <button class="text-xs flex items-center gap-1" style="color: #2563eb;" @click="toggleSignatureFullscreen">
-                <i class="pi pi-window-minimize text-[10px]"></i> Reduire
-              </button>
-            </div>
-          </div>
-          <div class="border-2 border-dashed border-gray-300 rounded-lg bg-white relative flex-1" style="touch-action: none;">
-            <canvas ref="canvasRef" class="w-full" style="height: 100%; display: block;" />
-            <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span class="text-gray-300 text-lg">Signez ici</span>
-            </div>
-          </div>
-          <div v-if="errorMsg" class="mt-2 p-2 bg-red-50 text-red-600 text-xs rounded">{{ errorMsg }}</div>
-          <button
-            class="w-full mt-2 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shrink-0"
-            :style="isEmpty ? 'background-color: #e5e7eb; color: #9ca3af;' : 'background-color: #16a34a; color: white;'"
-            :disabled="isSigning"
-            @click="requestValidation"
-          >
-            <i :class="isSigning ? 'pi pi-spin pi-spinner' : 'pi pi-check'"></i>
-            {{ unsignedDocs.length > 1 ? 'Signer et suivant' : 'Signer et terminer' }}
-          </button>
-        </div>
-      </div>
-    </Teleport>
 
     <!-- Confirmation dialog -->
     <Dialog v-model:visible="showConfirm" header="Confirmer la signature" modal class="w-full max-w-md">
