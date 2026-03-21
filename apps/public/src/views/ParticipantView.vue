@@ -85,7 +85,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="fixed inset-0 flex flex-col bg-gray-50">
+  <div class="app-fixed-layout bg-gray-50">
     <!-- Fixed top: Header + Tabs -->
     <header class="bg-white shadow-sm border-b z-20 shrink-0">
       <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">

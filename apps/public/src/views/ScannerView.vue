@@ -203,7 +203,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-gray-900 flex flex-col">
+  <div class="app-fixed-layout" style="background-color: #111827;">
     <!-- Compact header -->
     <header class="bg-gray-800 px-4 py-2 flex items-center gap-3 z-20">
       <div class="flex-1 min-w-0">

@@ -98,7 +98,7 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 </script>
 
 <template>
-  <div class="fixed inset-0 flex flex-col bg-gray-50">
+  <div class="app-fixed-layout bg-gray-50">
     <!-- Fixed: Header -->
     <header class="bg-white shadow-sm border-b border-gray-200 z-20 shrink-0">
       <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">

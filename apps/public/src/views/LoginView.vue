@@ -78,7 +78,7 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+  <div class="app-fixed-layout bg-gray-100 items-center justify-center p-4" style="overflow-y: auto !important;">
     <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">CheckFlow</h1>
