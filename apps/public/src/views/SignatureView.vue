@@ -22,10 +22,37 @@ const showConfirm = ref(false)
 const textZoom = ref(100)
 const currentDocIndex = ref(0)
 const fullscreenSignature = ref(false)
+const fsHeight = ref('100%')
+const fsWidth = ref('100%')
+
+function updateFsDimensions() {
+  fsHeight.value = window.innerHeight + 'px'
+  fsWidth.value = window.innerWidth + 'px'
+}
 
 function toggleSignatureFullscreen() {
   fullscreenSignature.value = !fullscreenSignature.value
+  if (fullscreenSignature.value) {
+    updateFsDimensions()
+    window.addEventListener('resize', onFsResize)
+    window.addEventListener('orientationchange', onFsOrientationChange)
+  } else {
+    window.removeEventListener('resize', onFsResize)
+    window.removeEventListener('orientationchange', onFsOrientationChange)
+  }
   nextTick(() => resizeCanvas())
+}
+
+function onFsResize() {
+  updateFsDimensions()
+  nextTick(() => resizeCanvas())
+}
+
+function onFsOrientationChange() {
+  setTimeout(() => {
+    updateFsDimensions()
+    nextTick(() => resizeCanvas())
+  }, 300)
 }
 
 
@@ -203,8 +230,10 @@ onMounted(async () => {
 
     <!-- Signature pad — normal (bottom fixed) or fullscreen -->
     <div v-if="currentDoc"
-      :class="fullscreenSignature ? 'fixed inset-0 z-50 flex flex-col' : 'shrink-0 border-t shadow-[0_-2px_10px_rgba(0,0,0,0.08)]'"
-      style="background-color: white;"
+      :class="fullscreenSignature ? 'z-50 flex flex-col' : 'shrink-0 border-t shadow-[0_-2px_10px_rgba(0,0,0,0.08)]'"
+      :style="fullscreenSignature
+        ? `position:fixed;top:0;left:0;width:${fsWidth};height:${fsHeight};background-color:white;`
+        : 'background-color:white;'"
     >
       <div :class="fullscreenSignature ? 'flex-1 flex flex-col p-4' : 'max-w-3xl mx-auto p-3'">
         <div class="flex items-center justify-between mb-2">
