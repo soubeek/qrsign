@@ -73,7 +73,7 @@ const router = createRouter({
       path: '/email',
       name: 'email-settings',
       component: () => import('@/views/EmailSettingsView.vue'),
-      meta: { requiresAuth: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
+      meta: { requiresAuth: true, roles: ['SUPER_ADMIN'] },
     },
     {
       path: '/audit',

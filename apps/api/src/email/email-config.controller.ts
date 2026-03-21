@@ -12,19 +12,19 @@ export class EmailConfigController {
   ) {}
 
   @Get()
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN')
   find() {
     return this.emailConfigService.find();
   }
 
   @Put()
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN')
   upsert(@Body() dto: UpsertEmailConfigDto) {
     return this.emailConfigService.upsert(dto);
   }
 
   @Post('test')
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN')
   async sendTest(@Body('toAddress') toAddress: string) {
     try {
       await this.emailService.sendTest(toAddress);
