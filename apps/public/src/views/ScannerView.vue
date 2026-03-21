@@ -142,9 +142,7 @@ async function onSearch() {
   try {
     const result = await checkin.searchParticipants(q, 10)
     searchResults.value = result.participants || []
-    if (searchResults.value.length === 1) {
-      autoSelectTimeout = setTimeout(() => selectParticipant(searchResults.value[0]), 600)
-    }
+    // Let the operator manually select even if only one result
   } catch { searchResults.value = [] }
   finally { isSearching.value = false }
 }
