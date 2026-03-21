@@ -282,9 +282,8 @@ onUnmounted(() => {
       <Transition name="slide">
         <div v-if="showSearch" class="fixed inset-0 z-50 flex flex-col" id="search-overlay">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeSearch"></div>
-          <div class="relative mt-auto bg-white rounded-t-2xl shadow-2xl flex flex-col" style="max-height: 80vh;">
-            <div class="flex justify-center pt-3 pb-1"><div class="w-10 h-1 rounded-full bg-gray-300"></div></div>
-            <div class="px-4 pb-3 flex items-center gap-3">
+          <div class="relative bg-white rounded-b-2xl shadow-2xl flex flex-col" style="max-height: 80vh;">
+            <div class="px-4 pt-3 pb-3 flex items-center gap-3">
               <i class="pi pi-search text-gray-400"></i>
               <input
                 v-model="searchQuery"
