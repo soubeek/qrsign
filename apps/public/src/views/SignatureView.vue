@@ -191,6 +191,8 @@ onMounted(async () => {
             <div class="text-sm leading-relaxed" :style="declarationStyle" v-html="formatContent(declarationText)"></div>
           </div>
         </div>
+        <!-- Spacer outside zoom wrapper — always visible -->
+        <div style="height: 2rem;"></div>
       </div>
     </div>
 
