@@ -58,12 +58,31 @@ async function toggleFullscreen() {
   } catch {}
 }
 
+// Force viewport height recalculation (iOS Safari)
+function fixViewport() {
+  const h = window.innerHeight + 'px'
+  document.documentElement.style.height = h
+  document.body.style.height = h
+  const app = document.getElementById('app')
+  if (app) app.style.height = h
+}
+
 onMounted(() => {
+  // Lock viewport on iOS
+  fixViewport()
+  window.addEventListener('resize', fixViewport)
+  window.addEventListener('orientationchange', () => setTimeout(fixViewport, 300))
+
   // Prevent iOS Safari bounce/overscroll on body
   document.body.addEventListener('touchmove', (e) => {
-    if (e.target === document.body || e.target === document.documentElement) {
-      e.preventDefault()
+    let target = e.target as HTMLElement | null
+    // Allow scroll inside overflow-y-auto containers
+    while (target && target !== document.body) {
+      const style = window.getComputedStyle(target)
+      if (style.overflowY === 'auto' || style.overflowY === 'scroll') return
+      target = target.parentElement
     }
+    e.preventDefault()
   }, { passive: false })
 
   // Fullscreen tracking
