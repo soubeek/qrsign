@@ -7,16 +7,30 @@ import { UpdateEventDto } from './dto/update-event.dto';
 export class EventsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(user?: { id: string; role: string }) {
+    // SUPER_ADMIN sees all events
+    if (!user || user.role === 'SUPER_ADMIN') {
+      return this.prisma.event.findMany({
+        include: { _count: { select: { participants: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    // Other users see only events they are assigned to
+    const userEvents = await this.prisma.userEvent.findMany({
+      where: { userId: user.id },
+      select: { eventId: true },
+    });
+    const eventIds = userEvents.map(ue => ue.eventId);
+
     return this.prisma.event.findMany({
-      include: {
-        _count: { select: { participants: true } },
-      },
+      where: { id: { in: eventIds } },
+      include: { _count: { select: { participants: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findBySlug(slug: string) {
+  async findBySlug(slug: string, user?: { id: string; role: string }) {
     const event = await this.prisma.event.findUnique({
       where: { slug },
       include: {
@@ -29,6 +43,15 @@ export class EventsService {
       },
     });
     if (!event) throw new NotFoundException('Event not found');
+
+    // Non-SUPER_ADMIN must be assigned to the event
+    if (user && user.role !== 'SUPER_ADMIN') {
+      const hasAccess = await this.prisma.userEvent.findUnique({
+        where: { userId_eventId: { userId: user.id, eventId: event.id } },
+      });
+      if (!hasAccess) throw new NotFoundException('Event not found');
+    }
+
     return event;
   }
 

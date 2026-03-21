@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
 import { GlobalRole } from '@prisma/client';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -12,14 +12,14 @@ export class EventsController {
 
   @Get()
   @Roles(GlobalRole.VIEWER)
-  findAll() {
-    return this.eventsService.findAll();
+  findAll(@Req() req: any) {
+    return this.eventsService.findAll(req.user);
   }
 
   @Get(':slug')
   @Roles(GlobalRole.VIEWER)
-  findBySlug(@Param('slug') slug: string) {
-    return this.eventsService.findBySlug(slug);
+  findBySlug(@Param('slug') slug: string, @Req() req: any) {
+    return this.eventsService.findBySlug(slug, req.user);
   }
 
   @Get(':slug/config')
