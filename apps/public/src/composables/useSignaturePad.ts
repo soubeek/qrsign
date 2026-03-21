@@ -4,21 +4,41 @@ import SignaturePad from 'signature_pad'
 export function useSignaturePad(canvasRef: Ref<HTMLCanvasElement | null>) {
   const signaturePad = ref<SignaturePad | null>(null)
   const isEmpty = ref(true)
+  let resizeTimeout: ReturnType<typeof setTimeout> | null = null
 
   function resizeCanvas() {
     const canvas = canvasRef.value
     if (!canvas || !signaturePad.value) return
 
+    // Save current signature data before resize
+    const data = signaturePad.value.toData()
+    const wasEmpty = signaturePad.value.isEmpty()
+
     const ratio = Math.max(window.devicePixelRatio || 1, 1)
     const rect = canvas.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+
     canvas.width = rect.width * ratio
     canvas.height = rect.height * ratio
     const ctx = canvas.getContext('2d')
     if (ctx) {
       ctx.scale(ratio, ratio)
     }
+
     signaturePad.value.clear()
-    isEmpty.value = true
+
+    // Restore signature data if there was one
+    if (!wasEmpty && data.length > 0) {
+      signaturePad.value.fromData(data)
+      isEmpty.value = false
+    } else {
+      isEmpty.value = true
+    }
+  }
+
+  function debouncedResize() {
+    if (resizeTimeout) clearTimeout(resizeTimeout)
+    resizeTimeout = setTimeout(resizeCanvas, 150)
   }
 
   function setup() {
@@ -37,7 +57,8 @@ export function useSignaturePad(canvasRef: Ref<HTMLCanvasElement | null>) {
     })
 
     resizeCanvas()
-    window.addEventListener('resize', resizeCanvas)
+    window.addEventListener('resize', debouncedResize)
+    window.addEventListener('orientationchange', debouncedResize)
   }
 
   function clear() {
@@ -58,7 +79,9 @@ export function useSignaturePad(canvasRef: Ref<HTMLCanvasElement | null>) {
   })
 
   onUnmounted(() => {
-    window.removeEventListener('resize', resizeCanvas)
+    window.removeEventListener('resize', debouncedResize)
+    window.removeEventListener('orientationchange', debouncedResize)
+    if (resizeTimeout) clearTimeout(resizeTimeout)
     signaturePad.value?.off()
   })
 
