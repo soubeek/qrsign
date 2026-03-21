@@ -277,7 +277,6 @@ export class PdfGenerator {
         const sigWidth = (documentDef.signatureWidthMm / 25.4) * 72;
         const sigHeight = (documentDef.signatureHeightMm / 25.4) * 72;
         const pos = documentDef.signaturePosition || 'left';
-        this.logger.log(`Signature position: ${pos}, width: ${sigWidth}px`);
         let sigX = margin;
         if (pos === 'center') sigX = (width - sigWidth) / 2;
         else if (pos === 'right') sigX = width - margin - sigWidth;
