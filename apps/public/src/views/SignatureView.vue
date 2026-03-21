@@ -146,8 +146,8 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Scrollable: document content only -->
-    <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+    <!-- Scrollable + pinch-zoomable: document content only -->
+    <div class="flex-1 overflow-auto zoomable-content" style="-webkit-overflow-scrolling: touch;">
       <div v-if="!currentDoc" class="max-w-3xl mx-auto p-4 text-center py-12 text-gray-500">
         <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
         <p>Tous les documents ont ete signes.</p>
