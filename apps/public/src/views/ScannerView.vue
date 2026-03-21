@@ -35,6 +35,8 @@ let lastScannedCode = ''
 let lastScanTime = 0
 let clockInterval: ReturnType<typeof setInterval> | null = null
 let statsInterval: ReturnType<typeof setInterval> | null = null
+let resizeTimeout: ReturnType<typeof setTimeout> | null = null
+let handleResize: (() => void) | null = null
 
 let audioCtx: AudioContext | null = null
 function playBeep(f: number, d: number) {
@@ -190,10 +192,31 @@ onMounted(async () => {
   offline.refreshCache()
   clockInterval = setInterval(() => { clock.value = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }, 10000)
   statsInterval = setInterval(loadStats, 15000)
+
+  // Restart scanner on orientation/resize change
+  handleResize = () => {
+    if (resizeTimeout) clearTimeout(resizeTimeout)
+    resizeTimeout = setTimeout(async () => {
+      if (!scannerRunning.value || !scannerRef.value) return
+      try {
+        await scannerRef.value.stop()
+        scannerRunning.value = false
+        await scannerRef.value.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 280, height: 280 } },
+          (text) => handleScan(text), () => {})
+        scannerRunning.value = true
+      } catch {}
+    }, 500)
+  }
+  window.addEventListener('resize', handleResize)
+  window.addEventListener('orientationchange', handleResize)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  if (handleResize) {
+    window.removeEventListener('resize', handleResize)
+    window.removeEventListener('orientationchange', handleResize)
+  }
   if (searchDebounce) clearTimeout(searchDebounce)
   if (autoSelectTimeout) clearTimeout(autoSelectTimeout)
   if (clockInterval) clearInterval(clockInterval)
