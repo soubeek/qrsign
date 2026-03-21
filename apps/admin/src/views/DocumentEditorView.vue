@@ -27,6 +27,7 @@ const deleteTargetId = ref<string | null>(null)
 const showAssignments = ref(false)
 const participants = ref<any[]>([])
 const assignedParticipantIds = ref<string[]>([])
+const assignmentSearch = ref('')
 const isLoadingParticipants = ref(false)
 
 // Current document being edited
@@ -277,6 +278,7 @@ async function removeAsset(type: 'logo' | 'background') {
 async function openAssignments() {
   if (!selectedDocId.value) return
   showAssignments.value = true
+  assignmentSearch.value = ''
   isLoadingParticipants.value = true
   try {
     const [pRes, aRes] = await Promise.all([
@@ -560,11 +562,21 @@ watch(hasChanges, v => {
         </div>
 
         <div v-else>
-          <div class="mb-3 text-sm font-medium">
-            {{ assignedParticipantIds.length === 0 ? 'Tous les participants (aucune restriction)' : `${assignedParticipantIds.length} participant(s) selectionne(s)` }}
+          <div class="flex items-center gap-3 mb-3">
+            <div class="flex-1">
+              <InputText v-model="assignmentSearch" placeholder="Rechercher un participant..." class="w-full" />
+            </div>
+            <span class="text-sm font-medium shrink-0">
+              {{ assignedParticipantIds.length === 0 ? 'Tous' : `${assignedParticipantIds.length} selectionne(s)` }}
+            </span>
           </div>
           <div class="border rounded-lg max-h-96 overflow-y-auto divide-y">
-            <label v-for="p in participants" :key="p.id"
+            <label v-for="p in participants.filter(p => {
+              if (!assignmentSearch.trim()) return true
+              const s = assignmentSearch.toLowerCase()
+              const d = p.data || {}
+              return (d.nom || '').toLowerCase().includes(s) || (d.prenom || '').toLowerCase().includes(s) || (d.commune || '').toLowerCase().includes(s)
+            })" :key="p.id"
               class="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50"
             >
               <input type="checkbox"
