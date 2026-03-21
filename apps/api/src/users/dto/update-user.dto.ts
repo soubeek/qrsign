@@ -1,4 +1,5 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, MinLength, Matches } from 'class-validator';
+import { GlobalRole } from '@prisma/client';
 
 export class UpdateUserDto {
   @IsEmail()
@@ -6,7 +7,8 @@ export class UpdateUserDto {
   email?: string;
 
   @IsString()
-  @MinLength(4)
+  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, { message: 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre' })
   @IsOptional()
   password?: string;
 
@@ -18,9 +20,9 @@ export class UpdateUserDto {
   @IsOptional()
   lastName?: string;
 
-  @IsString()
+  @IsEnum(GlobalRole)
   @IsOptional()
-  role?: string;
+  role?: GlobalRole;
 
   @IsBoolean()
   @IsOptional()

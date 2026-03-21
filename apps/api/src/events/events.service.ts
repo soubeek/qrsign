@@ -174,7 +174,7 @@ export class EventsService {
       .map(ua => ({
         id: ua.user.id,
         firstName: ua.user.firstName,
-        lastName: ua.user.lastName,
+        lastName: ua.user.lastName.charAt(0) + '.',
         email: ua.user.email,
         role: ua.eventRole || ua.user.role,
       }));

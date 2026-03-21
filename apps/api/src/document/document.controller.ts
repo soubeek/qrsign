@@ -68,6 +68,8 @@ export class DocumentController {
   async getAsset(@Param('docId') docId: string, @Param('type') type: string, @Res() res: Response) {
     const filePath = await this.documentService.getAssetPath(docId, type);
     if (!filePath) { res.status(404).json({ message: 'Asset not found' }); return; }
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', 'inline');
     res.sendFile(path.resolve(filePath));
   }
 

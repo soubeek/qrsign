@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -116,7 +117,7 @@ export class UsersService {
   async resetPassword(id: string) {
     await this.findOne(id);
     // Generate a random temporary password
-    const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+    const tempPassword = crypto.randomBytes(6).toString('base64url') + 'A1!';
     const passwordHash = await bcrypt.hash(tempPassword, 12);
     await this.prisma.user.update({ where: { id }, data: { passwordHash } });
     return { message: 'Mot de passe reinitialise', tempPassword };

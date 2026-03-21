@@ -55,8 +55,8 @@ export class ParticipantsController {
 
   @Delete(':id')
   @Roles('SUPER_ADMIN', 'ADMIN')
-  async remove(@Param('id') id: string) {
-    return this.participantsService.remove(id);
+  async remove(@Param('slug') slug: string, @Param('id') id: string) {
+    return this.participantsService.remove(id, slug);
   }
 
   @Get(':id/qrcode')
@@ -69,8 +69,8 @@ export class ParticipantsController {
 
   @Get(':id')
   @Roles('SUPER_ADMIN', 'ADMIN', 'OPERATOR', 'VIEWER')
-  findOne(@Param('id') id: string) {
-    return this.participantsService.findOne(id);
+  findOne(@Param('slug') slug: string, @Param('id') id: string) {
+    return this.participantsService.findOne(id, slug);
   }
 
   @Put(':id')
@@ -81,8 +81,8 @@ export class ParticipantsController {
 
   @Post(':id/status')
   @Roles('SUPER_ADMIN', 'ADMIN', 'OPERATOR')
-  async updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.participantsService.updateStatus(id, status);
+  async updateStatus(@Param('slug') slug: string, @Param('id') id: string, @Body('status') status: string) {
+    return this.participantsService.updateStatus(id, status, slug);
   }
 
   @Post('send-emails')
@@ -100,7 +100,8 @@ export class ParticipantsController {
 
   @Get(':id/pdf/:docId')
   @Roles('SUPER_ADMIN', 'ADMIN', 'OPERATOR', 'VIEWER')
-  async getPdf(@Param('id') id: string, @Param('docId') docId: string, @Res() res: Response) {
+  async getPdf(@Param('slug') slug: string, @Param('id') id: string, @Param('docId') docId: string, @Res() res: Response) {
+    await this.participantsService.verifyEventScope(id, slug);
     const pdfPath = await this.participantsService.getPdfPath(id, docId);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${path.basename(pdfPath)}"`);

@@ -48,7 +48,7 @@ export class EmailService {
       host: emailConfig.smtpHost,
       port: emailConfig.smtpPort,
       secure: emailConfig.smtpSecure,
-      tls: { rejectUnauthorized: emailConfig.smtpRejectUnauthorized !== false ? false : true },
+      tls: { rejectUnauthorized: emailConfig.smtpRejectUnauthorized !== false },
     };
     if (emailConfig.smtpAuth !== false && emailConfig.smtpUser) {
       options.auth = { user: emailConfig.smtpUser, pass: this.decrypt(emailConfig.smtpPass || '') };

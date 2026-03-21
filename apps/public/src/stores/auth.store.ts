@@ -38,6 +38,10 @@ export const useAuthStore = defineStore('auth', () => {
       accessToken.value = null
       user.value = null
       localStorage.removeItem('access_token')
+      // Clear service worker caches to prevent data leakage
+      if ('caches' in window) {
+        caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
+      }
     }
   }
 

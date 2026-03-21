@@ -68,7 +68,8 @@ async function handleLogin() {
   try {
     await auth.login(selectedOperator.value.email, password.value)
     await configStore.loadConfig()
-    const redirect = (route.query.redirect as string) || '/scanner'
+    const raw = (route.query.redirect as string) || '/scanner'
+    const redirect = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/scanner'
     router.push(redirect)
   } catch {
     errorMessage.value = 'Mot de passe incorrect'

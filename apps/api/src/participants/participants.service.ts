@@ -10,6 +10,15 @@ import * as QRCode from 'qrcode';
 export class ParticipantsService {
   constructor(private prisma: PrismaService) {}
 
+  async verifyEventScope(participantId: string, slug: string) {
+    const event = await this.prisma.event.findUnique({ where: { slug } });
+    if (!event) throw new NotFoundException('Event not found');
+    const participant = await this.prisma.participant.findUnique({ where: { id: participantId } });
+    if (!participant || participant.eventId !== event.id) {
+      throw new NotFoundException('Participant not found');
+    }
+  }
+
   async findAll(slug: string, params: { search?: string; status?: string; limit?: number }) {
     const event = await this.prisma.event.findUnique({
       where: { slug },
@@ -60,7 +69,8 @@ export class ParticipantsService {
     return { participants, fields: event.fields, totalDocs: event.documents.length };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, slug?: string) {
+    if (slug) await this.verifyEventScope(id, slug);
     const participant = await this.prisma.participant.findUnique({
       where: { id },
       select: {
@@ -106,7 +116,7 @@ export class ParticipantsService {
     const event = await this.prisma.event.findUnique({ where: { slug }, include: { fields: true } });
     if (!event) throw new NotFoundException('Event not found');
     const participant = await this.prisma.participant.findUnique({ where: { id } });
-    if (!participant) throw new NotFoundException('Participant not found');
+    if (!participant || participant.eventId !== event.id) throw new NotFoundException('Participant not found');
 
     const editableKeys = event.fields.filter(f => f.editable).map(f => f.key);
     const currentData = participant.data as Record<string, any>;
@@ -119,7 +129,8 @@ export class ParticipantsService {
     return this.prisma.participant.update({ where: { id }, data: { data: newData } });
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(id: string, status: string, slug?: string) {
+    if (slug) await this.verifyEventScope(id, slug);
     const participant = await this.prisma.participant.findUnique({ where: { id } });
     if (!participant) throw new NotFoundException('Participant not found');
 
@@ -170,7 +181,8 @@ export class ParticipantsService {
     return { sent, skipped, errors, total: event.participants.length };
   }
 
-  async remove(id: string) {
+  async remove(id: string, slug?: string) {
+    if (slug) await this.verifyEventScope(id, slug);
     const participant = await this.prisma.participant.findUnique({ where: { id } });
     if (!participant) throw new NotFoundException('Participant not found');
     await this.prisma.participantSignature.deleteMany({ where: { participantId: id } });

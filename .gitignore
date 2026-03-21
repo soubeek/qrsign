@@ -8,3 +8,4 @@ postgres_data/
 .turbo/
 pnpm-lock.yaml
 backups/
+apps/public/dev-dist/

@@ -93,10 +93,21 @@ export class DocumentService {
     const doc = await this.prisma.documentDef.findUnique({ where: { id: docId }, include: { event: true } });
     if (!doc) throw new NotFoundException('Document not found');
 
+    // Validate file type (images only)
+    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
+    const ext = (path.extname(file.originalname) || '.png').toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+      throw new NotFoundException('Format non autorise. Utilisez PNG, JPG ou WebP.');
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new NotFoundException('Fichier trop volumineux (max 5 Mo)');
+    }
+
     const dir = path.join(this.storagePath, doc.event.slug, 'assets');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    const ext = path.extname(file.originalname) || '.png';
     const filename = `${type}_${docId}${ext}`;
     const filePath = path.join(dir, filename);
     fs.writeFileSync(filePath, file.buffer);
