@@ -111,15 +111,15 @@ onMounted(async () => {
             <!-- Status toggle -->
             <div class="flex gap-2">
               <button v-if="participant.status === 'ABSENT'"
-                class="flex-1 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+                class="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5"
                 style="background-color: #16a34a; color: white;"
                 @click="changeStatus('PRESENT')"
-              ><i class="pi pi-check"></i> Marquer present</button>
+              ><i class="pi pi-check text-xs"></i> Present</button>
               <button v-if="participant.status === 'PRESENT' && !allSigned"
-                class="flex-1 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+                class="px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5"
                 style="background-color: #f3f4f6; color: #4b5563;"
                 @click="changeStatus('ABSENT')"
-              ><i class="pi pi-times"></i> Marquer absent</button>
+              ><i class="pi pi-times text-xs"></i> Absent</button>
             </div>
           </div>
         </div>
