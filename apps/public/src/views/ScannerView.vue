@@ -183,7 +183,8 @@ onMounted(async () => {
   await nextTick()
   try {
     scannerRef.value = new Html5Qrcode('qr-reader')
-    await scannerRef.value.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 280, height: 280 } },
+    const qrSize = Math.min(280, Math.floor(window.innerHeight * 0.4), Math.floor(window.innerWidth * 0.6))
+    await scannerRef.value.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: qrSize, height: qrSize } },
       (text) => handleScan(text), () => {})
     scannerRunning.value = true
   } catch { cameraAvailable.value = false }
@@ -279,9 +280,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Scanner area (fills remaining space) -->
-    <div class="flex-1 flex items-center justify-center p-3">
-      <div class="w-full max-w-md">
-        <div class="rounded-2xl overflow-hidden bg-black relative">
+    <div class="flex-1 flex items-center justify-center p-1 min-h-0">
+      <div class="w-full h-full max-w-md flex items-center justify-center">
+        <div class="rounded-2xl overflow-hidden bg-black relative w-full" style="max-height: 100%;">
           <div v-if="cameraAvailable" id="qr-reader" class="w-full"></div>
           <div v-else class="text-center text-gray-500 py-20">
             <i class="pi pi-video text-5xl mb-4"></i>
