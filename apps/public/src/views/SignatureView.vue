@@ -207,7 +207,12 @@ onMounted(async () => {
         </div>
         <div class="border-2 border-dashed border-gray-300 rounded-lg bg-white relative" style="touch-action: none;">
           <canvas ref="canvasRef" class="w-full" style="height: 200px; display: block;" />
-          <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <!-- Signing guide line -->
+          <div class="absolute left-4 right-4 pointer-events-none" style="bottom: 50px;">
+            <div style="border-bottom: 1px solid #d1d5db;"></div>
+            <span class="text-gray-300" style="font-size: 10px; position: absolute; right: 0; top: 4px;">signature</span>
+          </div>
+          <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center pointer-events-none" style="padding-bottom: 30px;">
             <span class="text-gray-300 text-sm">Signez ici</span>
           </div>
         </div>
