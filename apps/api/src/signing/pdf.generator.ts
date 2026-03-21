@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PDFDocument, StandardFonts, rgb, PageSizes } from 'pdf-lib';
 import * as fs from 'fs';
+import * as crypto from 'crypto';
+import * as os from 'os';
+import * as path from 'path';
+import { encrypt } from 'node-qpdf2';
 
 @Injectable()
 export class PdfGenerator {
@@ -316,6 +320,49 @@ export class PdfGenerator {
     }
 
     const pdfBytes = await doc.save();
-    return Buffer.from(pdfBytes);
+    const unprotected = Buffer.from(pdfBytes);
+
+    // Protect PDF: AES-256 encryption, allow print only
+    try {
+      return await this.protectPdf(unprotected);
+    } catch (err) {
+      this.logger.warn(`PDF protection failed, returning unprotected: ${err}`);
+      return unprotected;
+    }
+  }
+
+  private async protectPdf(pdfBuffer: Buffer): Promise<Buffer> {
+    const tmpDir = os.tmpdir();
+    const id = crypto.randomUUID();
+    const inputPath = path.join(tmpDir, `checkflow-${id}-in.pdf`);
+    const outputPath = path.join(tmpDir, `checkflow-${id}-out.pdf`);
+
+    try {
+      fs.writeFileSync(inputPath, pdfBuffer);
+
+      const ownerPassword = crypto.randomBytes(32).toString('hex');
+
+      await encrypt({
+        input: inputPath,
+        output: outputPath,
+        password: { user: '', owner: ownerPassword },
+        keyLength: 256,
+        restrictions: {
+          print: 'full',
+          modify: 'none',
+          extract: 'n',
+          annotate: 'n',
+          useAes: 'y',
+        },
+      });
+
+      const protectedPdf = fs.readFileSync(outputPath);
+      this.logger.log('PDF protected with AES-256 (print allowed, modify/extract blocked)');
+      return protectedPdf;
+    } finally {
+      // Cleanup temp files
+      try { fs.unlinkSync(inputPath); } catch {}
+      try { fs.unlinkSync(outputPath); } catch {}
+    }
   }
 }

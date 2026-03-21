@@ -10,6 +10,7 @@ COPY src ./src
 RUN pnpm build
 
 FROM node:20-alpine
+RUN apk add --no-cache qpdf
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
