@@ -30,7 +30,14 @@ async function downloadPdf(docId: string) {
   try {
     const res = await api.get(`/events/${config.slug}/participants/${participantId}/pdf/${docId}`, { responseType: 'blob' })
     const url = URL.createObjectURL(res.data)
-    window.open(url, '_blank')
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `document-${docId}.pdf`
+    a.target = '_blank'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
   } catch {}
 }
 
