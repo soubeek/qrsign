@@ -78,7 +78,7 @@ async function sendEmail() {
 }
 
 onMounted(async () => {
-  if (!participant.value || participant.value.id !== participantId) await checkin.loadParticipant(participantId)
+  await checkin.loadParticipant(participantId)
   if (participant.value?.data) editData.value = { ...(participant.value.data as Record<string, any>) }
   if (!config.config) await config.loadConfig()
   // Default to documents tab if there are unsigned docs, otherwise infos

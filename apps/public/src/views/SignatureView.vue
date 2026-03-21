@@ -116,9 +116,7 @@ async function confirmAndSign() {
 }
 
 onMounted(async () => {
-  if (!participant.value || participant.value.id !== participantId) {
-    await checkin.loadParticipant(participantId)
-  }
+  await checkin.loadParticipant(participantId)
   if (!config.config) await config.loadConfig()
   if (unsignedDocs.value.length === 0 && allDocs.value.length > 0) {
     router.push(`/confirmation/${participantId}`)

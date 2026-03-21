@@ -51,7 +51,7 @@ async function sendEmail() {
 function newScan() { checkin.clearCurrent(); router.push('/scanner') }
 
 onMounted(async () => {
-  if (!participant.value || participant.value.id !== participantId) await checkin.loadParticipant(participantId)
+  await checkin.loadParticipant(participantId)
   timer = setInterval(() => { countdown.value--; if (countdown.value <= 0) newScan() }, 1000)
 })
 onUnmounted(() => { if (timer) clearInterval(timer) })
