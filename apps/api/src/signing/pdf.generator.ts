@@ -255,11 +255,13 @@ export class PdfGenerator {
       y -= 8;
     }
 
-    // Declaration
-    y -= 8;
-    const declaration = replaceVars(documentDef.declarationTemplate || '');
-    drawText(declaration, 10, font, rgb(0, 0, 0), documentDef.declarationAlign || 'left');
-    y -= 12;
+    // Declaration (skip if empty)
+    const declaration = replaceVars(documentDef.declarationTemplate || '').trim();
+    if (declaration) {
+      y -= 8;
+      drawText(declaration, 10, font, rgb(0, 0, 0), documentDef.declarationAlign || 'left');
+      y -= 12;
+    }
 
     // Signature image
     if (signatureData) {
