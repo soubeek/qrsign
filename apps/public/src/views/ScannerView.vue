@@ -205,7 +205,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-screen bg-gray-900 flex flex-col overflow-hidden">
+  <div class="fixed inset-0 bg-gray-900 flex flex-col">
     <!-- Compact header -->
     <header class="bg-gray-800 px-4 py-2 flex items-center gap-3 z-20">
       <div class="flex-1 min-w-0">
