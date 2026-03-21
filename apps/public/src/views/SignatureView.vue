@@ -138,9 +138,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
-    <!-- Header (fixed) -->
-    <div class="bg-white shadow-sm border-b p-4 sticky top-0 z-10">
+  <div class="app-fixed-layout bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b p-4 z-10 shrink-0">
       <div class="max-w-3xl mx-auto">
         <div class="flex items-center gap-3 mb-2">
           <Button icon="pi pi-arrow-left" severity="secondary" text @click="router.push(`/participant/${participantId}`)" />
@@ -157,7 +157,7 @@ onMounted(async () => {
     </div>
 
     <!-- Scrollable content -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto pb-8" style="-webkit-overflow-scrolling: touch;">
       <div v-if="!currentDoc" class="max-w-3xl mx-auto p-4 text-center py-12 text-gray-500">
         <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
         <p>Tous les documents ont ete signes.</p>

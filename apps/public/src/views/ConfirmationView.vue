@@ -51,7 +51,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+  <div class="app-fixed-layout bg-gray-50 items-center justify-center p-4" style="overflow-y: auto !important;">
     <div class="max-w-lg w-full">
       <div class="bg-white rounded-xl shadow p-8 text-center">
         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
