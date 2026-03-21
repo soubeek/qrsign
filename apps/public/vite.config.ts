@@ -11,6 +11,9 @@ export default defineConfig({
     basicSsl(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallbackDenylist: [/^\/admin/, /^\/api/],
@@ -36,12 +39,15 @@ export default defineConfig({
         name: 'CheckFlow - Accueil',
         short_name: 'CheckFlow',
         description: 'Application de check-in QR et signature',
+        start_url: '/',
+        scope: '/',
         theme_color: '#2563eb',
         background_color: '#f9fafb',
         display: 'standalone',
-        orientation: 'any',
+        orientation: 'portrait',
         icons: [
-          { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">✅</text></svg>', sizes: 'any', type: 'image/svg+xml' },
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
     }),

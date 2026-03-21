@@ -17,6 +17,7 @@ const offline = useOfflineStore()
 const scannerRef = ref<Html5Qrcode | null>(null)
 const scannerRunning = ref(false)
 const cameraAvailable = ref(true)
+const scannerAreaRef = ref<HTMLElement | null>(null)
 const searchQuery = ref('')
 const searchResults = ref<any[]>([])
 const isSearching = ref(false)
@@ -51,6 +52,25 @@ function playSuccess() { playBeep(880, 150); setTimeout(() => playBeep(1100, 200
 function playError() { playBeep(300, 300) }
 function vibrate(p: number | number[]) { try { navigator.vibrate?.(p) } catch {} }
 function refocus() { if (hiddenInput.value && !showSearch.value) hiddenInput.value.focus() }
+
+function resizeScannerArea() {
+  if (!scannerAreaRef.value) return
+  const el = scannerAreaRef.value
+  const rect = el.getBoundingClientRect()
+  // Force all children of qr-reader to fit
+  const qrReader = document.getElementById('qr-reader')
+  if (qrReader) {
+    const maxH = rect.height
+    qrReader.style.maxHeight = maxH + 'px'
+    qrReader.style.overflow = 'hidden'
+    const video = qrReader.querySelector('video')
+    if (video) {
+      video.style.maxHeight = maxH + 'px'
+      video.style.objectFit = 'cover'
+      video.style.height = 'auto'
+    }
+  }
+}
 
 async function stopScanner() {
   if (scannerRunning.value && scannerRef.value) {
@@ -187,6 +207,8 @@ onMounted(async () => {
     await scannerRef.value.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: qrSize, height: qrSize } },
       (text) => handleScan(text), () => {})
     scannerRunning.value = true
+    // Let html5-qrcode render, then constrain
+    setTimeout(resizeScannerArea, 500)
   } catch { cameraAvailable.value = false }
   refocus(); loadStats()
   offline.init()
@@ -202,9 +224,11 @@ onMounted(async () => {
       try {
         await scannerRef.value.stop()
         scannerRunning.value = false
-        await scannerRef.value.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 280, height: 280 } },
+        const qrSize = Math.min(280, Math.floor(window.innerHeight * 0.4), Math.floor(window.innerWidth * 0.6))
+        await scannerRef.value.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: qrSize, height: qrSize } },
           (text) => handleScan(text), () => {})
         scannerRunning.value = true
+        setTimeout(resizeScannerArea, 500)
       } catch {}
     }, 500)
   }
@@ -280,9 +304,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Scanner area (fills remaining space) -->
-    <div class="flex-1 flex items-center justify-center p-1 min-h-0">
-      <div class="w-full h-full max-w-md flex items-center justify-center">
-        <div class="rounded-2xl overflow-hidden bg-black relative w-full" style="max-height: 100%;">
+    <div ref="scannerAreaRef" class="scanner-container">
+      <div style="width: 100%; max-width: 28rem; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <div class="rounded-2xl bg-black relative" style="width: 100%; max-height: 100%; overflow: hidden;">
           <div v-if="cameraAvailable" id="qr-reader" class="w-full"></div>
           <div v-else class="text-center text-gray-500 py-20">
             <i class="pi pi-video text-5xl mb-4"></i>
