@@ -287,15 +287,15 @@ onUnmounted(() => {
                 v-model="searchQuery"
                 type="text"
                 placeholder="Nom ou prenom..."
-                class="flex-1 text-lg outline-none bg-transparent"
+                class="flex-1 min-w-0 text-lg outline-none bg-transparent"
                 @input="onSearchInput"
                 @keydown.escape="closeSearch"
                 autofocus
               />
-              <button v-if="searchQuery" class="text-gray-400" @click="searchQuery = ''; searchResults = []">
+              <button v-if="searchQuery" class="text-gray-400 shrink-0" @click="searchQuery = ''; searchResults = []">
                 <i class="pi pi-times"></i>
               </button>
-              <button class="text-sm text-blue-600 font-medium" @click="closeSearch">Fermer</button>
+              <button class="text-sm text-blue-600 font-medium shrink-0" @click="closeSearch">Fermer</button>
             </div>
             <div class="border-t"></div>
             <div class="flex-1 overflow-y-auto">
