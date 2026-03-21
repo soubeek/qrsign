@@ -186,7 +186,7 @@ onMounted(async () => {
           </div>
 
           <!-- Declaration -->
-          <div class="bg-blue-50 rounded-xl shadow p-5 border border-blue-200">
+          <div class="bg-blue-50 rounded-xl shadow p-5 border border-blue-200 mb-6">
             <h3 class="font-semibold text-sm mb-2 text-blue-800">Declaration</h3>
             <div class="text-sm leading-relaxed" :style="declarationStyle" v-html="formatContent(declarationText)"></div>
           </div>
