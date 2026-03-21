@@ -17,7 +17,7 @@ const editData = ref<Record<string, any>>({})
 const isSaving = ref(false)
 const saveMessage = ref('')
 const qrCodeUrl = ref<string | null>(null)
-const activeTab = ref('documents')
+const activeTab = ref('infos')
 
 const participant = computed(() => checkin.current)
 const fields = computed(() => config.fields)
@@ -122,6 +122,14 @@ onMounted(async () => {
       <div class="flex border-b bg-white sticky top-[57px] z-10">
         <button
           class="flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors"
+          :style="activeTab === 'infos' ? 'border-color: #2563eb; color: #2563eb;' : 'border-color: transparent; color: #9ca3af;'"
+          @click="activeTab = 'infos'"
+        >
+          <i class="pi pi-user mr-1.5"></i>
+          Informations
+        </button>
+        <button
+          class="flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors"
           :style="activeTab === 'documents' ? 'border-color: #2563eb; color: #2563eb;' : 'border-color: transparent; color: #9ca3af;'"
           @click="activeTab = 'documents'"
         >
@@ -131,14 +139,6 @@ onMounted(async () => {
             class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
             style="background-color: #2563eb; color: white;"
           >{{ totalDocs - signedCount }}</span>
-        </button>
-        <button
-          class="flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors"
-          :style="activeTab === 'infos' ? 'border-color: #2563eb; color: #2563eb;' : 'border-color: transparent; color: #9ca3af;'"
-          @click="activeTab = 'infos'"
-        >
-          <i class="pi pi-user mr-1.5"></i>
-          Informations
         </button>
       </div>
 
