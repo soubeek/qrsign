@@ -205,7 +205,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 flex flex-col">
+  <div class="h-screen bg-gray-900 flex flex-col overflow-hidden">
     <!-- Compact header -->
     <header class="bg-gray-800 px-4 py-2 flex items-center gap-3 z-20">
       <div class="flex-1 min-w-0">
@@ -274,7 +274,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <input ref="hiddenInput" class="opacity-0 absolute -z-10" tabindex="-1" aria-hidden="true" />
+      <input ref="hiddenInput" class="opacity-0 absolute -z-10" tabindex="-1" aria-hidden="true" inputmode="none" readonly />
     </div>
 
     <!-- Search overlay -->
