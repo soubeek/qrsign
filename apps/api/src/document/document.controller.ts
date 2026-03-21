@@ -82,4 +82,16 @@ export class DocumentController {
   removeBackground(@Param('docId') docId: string) {
     return this.documentService.removeAsset(docId, 'background');
   }
+
+  @Get(':docId/assignments')
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  getAssignments(@Param('docId') docId: string) {
+    return this.documentService.getAssignments(docId);
+  }
+
+  @Post(':docId/assignments')
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  setAssignments(@Param('docId') docId: string, @Body('participantIds') participantIds: string[]) {
+    return this.documentService.setAssignments(docId, participantIds || []);
+  }
 }

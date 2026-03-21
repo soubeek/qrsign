@@ -70,10 +70,28 @@ export class ParticipantsService {
           include: { documentDef: { select: { id: true, title: true } } },
           orderBy: { createdAt: 'asc' },
         },
+        documentAssignments: {
+          select: { documentDefId: true },
+        },
       },
     });
     if (!participant) throw new NotFoundException('Participant not found');
-    return participant;
+
+    // Compute which documents this participant must sign
+    const allDocs = await this.prisma.documentDef.findMany({
+      where: { eventId: participant.eventId, required: true },
+      orderBy: { displayOrder: 'asc' },
+      include: { assignments: { select: { participantId: true } } },
+    });
+
+    // For each doc: if it has assignments, only assigned participants sign it
+    // If no assignments, all participants sign it (retrocompatible)
+    const assignedDocs = allDocs.filter(doc => {
+      if (doc.assignments.length === 0) return true;
+      return doc.assignments.some(a => a.participantId === id);
+    }).map(({ assignments, ...doc }) => doc);
+
+    return { ...participant, assignedDocs };
   }
 
   async create(slug: string, dto: CreateParticipantDto) {

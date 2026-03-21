@@ -130,10 +130,27 @@ model DocumentDef {
   displayOrder        Int     @default(0) @map("display_order")
   required            Boolean @default(true)
 
-  event      Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  signatures ParticipantSignature[]
+  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  signatures  ParticipantSignature[]
+  assignments DocumentAssignment[]
 
   @@map("document_defs")
+}
+
+// Assignment d'un document a un participant specifique
+// Si un document a des assignments, seuls les participants assignes doivent le signer
+// Si aucun assignment, tous les participants le signent (retro-compatible)
+model DocumentAssignment {
+  id              String @id @default(uuid())
+  documentDefId   String @map("document_def_id")
+  participantId   String @map("participant_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  documentDef  DocumentDef @relation(fields: [documentDefId], references: [id], onDelete: Cascade)
+  participant  Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([documentDefId, participantId])
+  @@map("document_assignments")
 }
 
 // Configuration email globale (singleton — une seule ligne)
@@ -174,8 +191,9 @@ model Participant {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt      @map("updated_at")
 
-  event      Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  signatures ParticipantSignature[]
+  event              Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  signatures         ParticipantSignature[]
+  documentAssignments DocumentAssignment[]
 
   @@unique([eventId, qrCode])
   @@map("participants")

@@ -24,6 +24,10 @@ const isSaving = ref(false)
 const isPreviewing = ref(false)
 const showDeleteConfirm = ref(false)
 const deleteTargetId = ref<string | null>(null)
+const showAssignments = ref(false)
+const participants = ref<any[]>([])
+const assignedParticipantIds = ref<string[]>([])
+const isLoadingParticipants = ref(false)
 
 // Current document being edited
 const doc = ref<any>(null)
@@ -269,6 +273,39 @@ async function removeAsset(type: 'logo' | 'background') {
   } catch {}
 }
 
+// Document assignments
+async function openAssignments() {
+  if (!selectedDocId.value) return
+  showAssignments.value = true
+  isLoadingParticipants.value = true
+  try {
+    const [pRes, aRes] = await Promise.all([
+      api.get(`/events/${slug}/participants?limit=500`),
+      api.get(`/events/${slug}/document/${selectedDocId.value}/assignments`),
+    ])
+    participants.value = pRes.data.participants || pRes.data || []
+    assignedParticipantIds.value = (aRes.data || []).map((a: any) => a.participantId)
+  } catch {}
+  finally { isLoadingParticipants.value = false }
+}
+
+function toggleParticipantAssignment(pid: string) {
+  const idx = assignedParticipantIds.value.indexOf(pid)
+  if (idx >= 0) assignedParticipantIds.value.splice(idx, 1)
+  else assignedParticipantIds.value.push(pid)
+}
+
+async function saveAssignments() {
+  if (!selectedDocId.value) return
+  try {
+    await api.post(`/events/${slug}/document/${selectedDocId.value}/assignments`, {
+      participantIds: assignedParticipantIds.value,
+    })
+    showAssignments.value = false
+    toast.add({ severity: 'success', summary: `${assignedParticipantIds.value.length || 'Tous les'} participants assignes`, life: 2000 })
+  } catch { toast.add({ severity: 'error', summary: 'Erreur', life: 3000 }) }
+}
+
 // Warn before unload
 function onBeforeUnload(e: BeforeUnloadEvent) { if (hasChanges.value) { e.preventDefault(); e.returnValue = '' } }
 watch(hasChanges, v => {
@@ -485,9 +522,10 @@ watch(hasChanges, v => {
         </div>
 
         <!-- Actions -->
-        <div class="flex gap-3 sticky bottom-0 bg-gray-50 py-4 border-t">
+        <div class="flex flex-wrap gap-3 sticky bottom-0 bg-gray-50 py-4 border-t">
           <Button label="Sauvegarder" icon="pi pi-check" :loading="isSaving" @click="saveDocument" />
           <Button label="Previsualiser PDF" icon="pi pi-eye" severity="secondary" :loading="isPreviewing" @click="previewPdf" />
+          <Button label="Assigner aux participants" icon="pi pi-users" severity="info" outlined @click="openAssignments" />
         </div>
       </div>
 
@@ -506,6 +544,49 @@ watch(hasChanges, v => {
       <template #footer>
         <Button label="Annuler" severity="secondary" text @click="showDeleteConfirm = false" />
         <Button label="Supprimer" icon="pi pi-trash" severity="danger" @click="executeDelete" />
+      </template>
+    </Dialog>
+
+    <!-- Document assignments dialog -->
+    <Dialog v-model:visible="showAssignments" header="Assigner le document aux participants" modal class="w-full max-w-lg" :style="{ maxHeight: '80vh' }">
+      <div class="p-2">
+        <p class="text-sm text-gray-500 mb-3">
+          Si aucun participant n'est selectionne, <strong>tous</strong> les participants devront signer ce document.
+          Sinon, seuls les participants coches seront concernes.
+        </p>
+
+        <div v-if="isLoadingParticipants" class="text-center py-8 text-gray-400">
+          <i class="pi pi-spin pi-spinner text-xl"></i>
+        </div>
+
+        <div v-else>
+          <div class="mb-3 text-sm font-medium">
+            {{ assignedParticipantIds.length === 0 ? 'Tous les participants (aucune restriction)' : `${assignedParticipantIds.length} participant(s) selectionne(s)` }}
+          </div>
+          <div class="border rounded-lg max-h-96 overflow-y-auto divide-y">
+            <label v-for="p in participants" :key="p.id"
+              class="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50"
+            >
+              <input type="checkbox"
+                :checked="assignedParticipantIds.includes(p.id)"
+                @change="toggleParticipantAssignment(p.id)"
+                class="w-4 h-4 rounded"
+              />
+              <div class="flex-1 min-w-0">
+                <span class="font-medium text-sm">{{ p.data?.prenom }} {{ p.data?.nom }}</span>
+                <span v-if="p.data?.commune" class="text-xs text-gray-400 ml-2">{{ p.data.commune }}</span>
+              </div>
+              <Tag :value="p.status === 'SIGNED' ? 'Signe' : p.status === 'PRESENT' ? 'Present' : 'Absent'"
+                :severity="p.status === 'SIGNED' ? 'success' : p.status === 'PRESENT' ? 'warn' : 'secondary'"
+                class="text-xs"
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" text @click="showAssignments = false" />
+        <Button label="Enregistrer" icon="pi pi-check" @click="saveAssignments" />
       </template>
     </Dialog>
   </div>

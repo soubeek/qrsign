@@ -136,4 +136,29 @@ export class DocumentService {
     // Preview = document template only, no participant data, no signature
     return this.pdfGenerator.generate(null, doc.event, doc, '', new Date());
   }
+
+  async getAssignments(docId: string) {
+    const doc = await this.prisma.documentDef.findUnique({ where: { id: docId } });
+    if (!doc) throw new NotFoundException('Document not found');
+    return this.prisma.documentAssignment.findMany({
+      where: { documentDefId: docId },
+      select: { participantId: true },
+    });
+  }
+
+  async setAssignments(docId: string, participantIds: string[]) {
+    const doc = await this.prisma.documentDef.findUnique({ where: { id: docId } });
+    if (!doc) throw new NotFoundException('Document not found');
+
+    // Delete existing assignments and create new ones
+    await this.prisma.documentAssignment.deleteMany({ where: { documentDefId: docId } });
+
+    if (participantIds.length > 0) {
+      await this.prisma.documentAssignment.createMany({
+        data: participantIds.map(pid => ({ documentDefId: docId, participantId: pid })),
+      });
+    }
+
+    return { success: true, count: participantIds.length };
+  }
 }

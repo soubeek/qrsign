@@ -75,10 +75,16 @@ export class SigningService {
     const participantName = `${data['prenom'] || ''} ${(data['nom'] || '').toUpperCase()}`.trim();
     this.audit.log({ action: 'SIGN', eventSlug, targetId: participantId, targetLabel: participantName, details: `doc: ${documentDef.title}` });
 
-    // Check if all required documents are now signed
-    const requiredDocIds = event.documents.map(d => d.id);
+    // Check if all required documents (assigned to this participant) are now signed
+    const allDocs = await this.prisma.documentDef.findMany({
+      where: { eventId: event.id, required: true },
+      include: { assignments: { select: { participantId: true } } },
+    });
+    const participantDocIds = allDocs
+      .filter(doc => doc.assignments.length === 0 || doc.assignments.some(a => a.participantId === participantId))
+      .map(d => d.id);
     const signedDocIds = [...participant.signatures.map(s => s.documentDefId), documentDefId];
-    const allRequiredSigned = requiredDocIds.every(id => signedDocIds.includes(id));
+    const allRequiredSigned = participantDocIds.every(id => signedDocIds.includes(id));
 
     if (allRequiredSigned) {
       await this.prisma.participant.update({
@@ -88,7 +94,7 @@ export class SigningService {
     }
 
     // Count remaining unsigned docs
-    const remainingCount = requiredDocIds.filter(id => !signedDocIds.includes(id)).length;
+    const remainingCount = participantDocIds.filter(id => !signedDocIds.includes(id)).length;
 
     return {
       success: true,

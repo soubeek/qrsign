@@ -25,7 +25,11 @@ const currentDocIndex = ref(0)
 
 
 const participant = computed(() => checkin.current)
-const allDocs = computed(() => config.requiredDocuments)
+const allDocs = computed(() => {
+  const assigned = (participant.value as any)?.assignedDocs
+  if (assigned && assigned.length > 0) return assigned
+  return config.requiredDocuments
+})
 const signedDocIds = computed(() => {
   const sigs = (participant.value as any)?.signatures || []
   return sigs.map((s: any) => s.documentDefId)

@@ -22,7 +22,12 @@ const activeTab = ref('infos')
 
 const participant = computed(() => checkin.current)
 const fields = computed(() => config.fields)
-const allDocs = computed(() => config.requiredDocuments)
+// Use participant-specific assigned docs if available, otherwise fall back to config
+const allDocs = computed(() => {
+  const assigned = (participant.value as any)?.assignedDocs
+  if (assigned && assigned.length > 0) return assigned
+  return config.requiredDocuments
+})
 const signatures = computed(() => (participant.value as any)?.signatures || [])
 const signedDocIds = computed(() => signatures.value.map((s: any) => s.documentDefId))
 const signedCount = computed(() => signedDocIds.value.length)
