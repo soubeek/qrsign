@@ -34,7 +34,7 @@ export class ParticipantsController {
   async getTemplateCsv(@Param('slug') slug: string, @Res() res: Response) {
     const csv = await this.participantsService.generateTemplateCsv(slug);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${slug}_modele_import.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${slug.replace(/[^a-zA-Z0-9_-]/g, '_')}_modele_import.csv"`);
     res.send('\uFEFF' + csv);
   }
 
@@ -43,7 +43,7 @@ export class ParticipantsController {
   async exportBadges(@Param('slug') slug: string, @Res() res: Response) {
     const pdfBuffer = await this.participantsService.generateBadgesPdf(slug);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${slug}_badges.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${slug.replace(/[^a-zA-Z0-9_-]/g, '_')}_badges.pdf"`);
     res.send(pdfBuffer);
   }
 
@@ -93,7 +93,7 @@ export class ParticipantsController {
 
   @Post('import')
   @Roles('SUPER_ADMIN', 'ADMIN')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
   importCsv(@Param('slug') slug: string, @UploadedFile() file: Express.Multer.File) {
     return this.participantsService.importCsv(slug, file.buffer);
   }

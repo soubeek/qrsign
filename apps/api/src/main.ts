@@ -17,7 +17,7 @@ async function bootstrap() {
   // Security headers
   app.use(helmet({
     contentSecurityPolicy: isProduction ? undefined : false, // disable CSP in dev (Vite HMR)
-    crossOriginEmbedderPolicy: false,
+    crossOriginEmbedderPolicy: isProduction,
   }));
 
   // CORS

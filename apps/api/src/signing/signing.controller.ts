@@ -1,4 +1,5 @@
 import { Controller, Post, Param, Body, BadRequestException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { SigningService } from './signing.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 
@@ -9,6 +10,7 @@ export class SigningController {
   constructor(private signingService: SigningService) {}
 
   @Post(':participantId/:documentDefId')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Roles('SUPER_ADMIN', 'ADMIN', 'OPERATOR')
   sign(
     @Param('slug') slug: string,

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import DOMPurify from 'dompurify'
 import { useCheckinStore } from '../stores/checkin.store'
 import { useConfigStore } from '../stores/config.store'
 import { useSignaturePad } from '../composables/useSignaturePad'
@@ -78,7 +79,7 @@ function formatContent(text: string, align?: string): string {
   html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul class="list-disc list-inside my-1">$1</ul>')
   html = html.replace(/\n/g, '<br>')
   html = html.replace(/<br><ul/g, '<ul').replace(/<\/ul><br>/g, '</ul>')
-  return html
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['strong', 'em', 'br', 'ul', 'li'], ALLOWED_ATTR: ['class'] })
 }
 
 function sectionStyle(section: any): string {

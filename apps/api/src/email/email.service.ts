@@ -90,7 +90,7 @@ export class EmailService {
       templateSource = fs.readFileSync(templatePath, 'utf8');
     } catch {
       templateSource =
-        '<html><body><h2>{{eventTitle}}</h2><p>Bonjour {{participantName}},</p><div>{{{bodyContent}}}</div><p><em>Document signé en pièce jointe.</em></p></body></html>';
+        '<html><body><h2>{{eventTitle}}</h2><p>Bonjour {{participantName}},</p><div>{{bodyContent}}</div><p><em>Document signé en pièce jointe.</em></p></body></html>';
     }
 
     const vars = {
@@ -138,7 +138,8 @@ export class EmailService {
       data: { emailSentAt: new Date() },
     });
 
-    this.logger.log(`Email sent to ${recipientEmail} for ${participantId}`);
+    const maskedEmail = recipientEmail.replace(/^(.{2}).*(@.*)$/, '$1***$2');
+    this.logger.log(`Email sent to ${maskedEmail} for ${participantId}`);
   }
 
   async sendTest(toAddress: string): Promise<void> {

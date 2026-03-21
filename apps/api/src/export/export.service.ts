@@ -30,8 +30,10 @@ export class ExportService {
     for (const p of event.participants) {
       const data = p.data as Record<string, any>;
       const values = headers.map(h => {
-        const val = data[h] ?? '';
-        return String(val).includes(';') ? `"${val}"` : String(val);
+        let val = String(data[h] ?? '');
+        // Prevent CSV formula injection
+        if (/^[=+\-@\t\r]/.test(val)) val = "'" + val;
+        return val.includes(';') ? `"${val}"` : val;
       });
       values.push(
         p.status,

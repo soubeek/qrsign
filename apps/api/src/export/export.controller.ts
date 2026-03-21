@@ -14,7 +14,7 @@ export class ExportController {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${slug}_export.csv"`,
+      `attachment; filename="${slug.replace(/[^a-zA-Z0-9_-]/g, '_')}_export.csv"`,
     );
     res.send('\uFEFF' + csv); // BOM for Excel UTF-8
   }
@@ -25,7 +25,7 @@ export class ExportController {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${slug}_pdfs.zip"`,
+      `attachment; filename="${slug.replace(/[^a-zA-Z0-9_-]/g, '_')}_pdfs.zip"`,
     );
     await this.exportService.exportPdfs(slug, res);
   }

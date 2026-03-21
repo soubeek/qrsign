@@ -34,6 +34,16 @@ export class AuthService {
 
     this.audit.log({ action: 'LOGIN', userId: user.id, userEmail: user.email });
 
+    // Opportunistic cleanup of expired/revoked tokens
+    this.prisma.refreshToken.deleteMany({
+      where: {
+        OR: [
+          { revokedAt: { not: null } },
+          { expiresAt: { lt: new Date() } },
+        ],
+      },
+    }).catch(() => {});
+
     const { passwordHash, ...userWithoutPassword } = user;
     return {
       accessToken: tokens.accessToken,
