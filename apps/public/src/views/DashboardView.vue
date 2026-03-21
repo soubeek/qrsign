@@ -98,9 +98,9 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+  <div class="fixed inset-0 flex flex-col bg-gray-50">
+    <!-- Fixed: Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 z-20 shrink-0">
       <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="min-w-0">
           <h1 class="text-lg sm:text-xl font-bold text-gray-800 truncate">
@@ -117,64 +117,57 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-3 py-4 flex flex-col gap-4">
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-4 gap-2 sm:gap-4">
-        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-gray-100 text-center">
-          <div class="text-[10px] sm:text-sm text-gray-500 uppercase tracking-wide">Total</div>
-          <div class="text-2xl sm:text-3xl font-bold text-gray-800">{{ stats.total }}</div>
+    <!-- Fixed: Stats + Search + Filters -->
+    <div class="bg-gray-50 shrink-0 max-w-7xl mx-auto w-full px-3 pt-3 pb-1 space-y-2">
+      <!-- Stats compact -->
+      <div class="grid grid-cols-4 gap-2">
+        <div class="bg-white rounded-lg p-2 shadow-sm border border-gray-100 text-center">
+          <div class="text-[10px] text-gray-500 uppercase">Total</div>
+          <div class="text-xl font-bold text-gray-800">{{ stats.total }}</div>
         </div>
-        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border-l-4 border-orange-400 text-center">
-          <div class="text-[10px] sm:text-sm text-orange-600 uppercase tracking-wide">Presents</div>
-          <div class="text-2xl sm:text-3xl font-bold text-orange-700">{{ stats.present }}</div>
+        <div class="bg-white rounded-lg p-2 shadow-sm border-l-3 border-orange-400 text-center">
+          <div class="text-[10px] text-orange-600 uppercase">Presents</div>
+          <div class="text-xl font-bold text-orange-700">{{ stats.present }}</div>
         </div>
-        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border-l-4 border-green-500 text-center">
-          <div class="text-[10px] sm:text-sm text-green-600 uppercase tracking-wide">Signes</div>
-          <div class="text-2xl sm:text-3xl font-bold text-green-700">{{ stats.signed }}</div>
+        <div class="bg-white rounded-lg p-2 shadow-sm border-l-3 border-green-500 text-center">
+          <div class="text-[10px] text-green-600 uppercase">Signes</div>
+          <div class="text-xl font-bold text-green-700">{{ stats.signed }}</div>
         </div>
-        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border-l-4 border-red-400 text-center">
-          <div class="text-[10px] sm:text-sm text-red-600 uppercase tracking-wide">Absents</div>
-          <div class="text-2xl sm:text-3xl font-bold text-red-700">{{ stats.absent }}</div>
+        <div class="bg-white rounded-lg p-2 shadow-sm border-l-3 border-red-400 text-center">
+          <div class="text-[10px] text-red-600 uppercase">Absents</div>
+          <div class="text-xl font-bold text-red-700">{{ stats.absent }}</div>
         </div>
       </div>
 
-      <!-- Progress -->
-      <div class="bg-white rounded-xl p-4 shadow-sm">
-        <div class="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Signatures</span>
-          <span class="font-semibold">{{ signProgress }}%</span>
+      <!-- Search -->
+      <InputText
+        v-model="searchQuery"
+        placeholder="Rechercher..."
+        class="w-full"
+        @input="searchParticipants"
+      />
+
+      <!-- Filter tabs -->
+      <div class="overflow-x-auto">
+        <div class="flex gap-1.5 min-w-max">
+          <button v-for="tab in [
+            {v:'all',l:'Tous',c:participants.length},
+            {v:'absent',l:'Absents',c:participants.filter(p=>p.status==='ABSENT').length},
+            {v:'present',l:'Presents',c:participants.filter(p=>p.status==='PRESENT'||p.status==='SIGNED').length},
+            {v:'signed',l:'Signes',c:participants.filter(p=>p.status==='SIGNED').length}
+          ]" :key="tab.v"
+            class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap"
+            :style="activeTab === tab.v ? 'background-color:#2563eb;color:white;' : 'background-color:#f3f4f6;color:#4b5563;'"
+            @click="activeTab = tab.v; currentPage = 1"
+          >{{ tab.l }} ({{ tab.c }})</button>
         </div>
-        <ProgressBar :value="signProgress" :showValue="false" class="h-2" />
       </div>
+    </div>
 
-      <!-- Participant List -->
-      <div class="bg-white rounded-xl shadow-sm">
-        <div class="p-3 border-b border-gray-100">
-          <InputText
-            v-model="searchQuery"
-            placeholder="Rechercher..."
-            class="w-full"
-            @input="searchParticipants"
-          />
-        </div>
-
-        <!-- Filter tabs -->
-        <div class="px-3 pt-2 overflow-x-auto">
-          <div class="flex gap-1.5 pb-2 min-w-max">
-            <button v-for="tab in [
-              {v:'all',l:'Tous',c:participants.length},
-              {v:'absent',l:'Absents',c:participants.filter(p=>p.status==='ABSENT').length},
-              {v:'present',l:'Presents',c:participants.filter(p=>p.status==='PRESENT'||p.status==='SIGNED').length},
-              {v:'signed',l:'Signes',c:participants.filter(p=>p.status==='SIGNED').length}
-            ]" :key="tab.v"
-              class="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
-              :style="activeTab === tab.v ? 'background-color:#2563eb;color:white;' : 'background-color:#f3f4f6;color:#4b5563;'"
-              @click="activeTab = tab.v; currentPage = 1"
-            >{{ tab.l }} ({{ tab.c }})</button>
-          </div>
-        </div>
-
-        <!-- List -->
+    <!-- Scrollable: List only -->
+    <div class="flex-1 overflow-y-auto pb-20">
+      <div class="max-w-7xl mx-auto px-3">
+        <div class="bg-white rounded-xl shadow-sm mt-2">
         <div class="divide-y divide-gray-100">
           <button
             v-for="p in paginatedParticipants"
@@ -225,7 +218,8 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
             </button>
           </div>
         </div>
+        </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
