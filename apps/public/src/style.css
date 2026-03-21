@@ -85,11 +85,6 @@ html, body, #app {
   touch-action: manipulation;
 }
 
-/* Allow pinch-zoom in document reading areas */
-.zoomable-content,
-.zoomable-content * {
-  touch-action: pan-x pan-y pinch-zoom !important;
-}
 
 /* Remove tap highlight and hover delay on touch */
 @media (pointer: coarse) {

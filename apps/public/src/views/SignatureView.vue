@@ -19,6 +19,7 @@ const { isEmpty, clear, toDataURL, resizeCanvas } = useSignaturePad(canvasRef)
 const isSigning = ref(false)
 const errorMsg = ref('')
 const showConfirm = ref(false)
+const textZoom = ref(100)
 const currentDocIndex = ref(0)
 
 const participant = computed(() => checkin.current)
@@ -146,8 +147,8 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Scrollable + pinch-zoomable: document content only -->
-    <div class="flex-1 overflow-auto zoomable-content" style="-webkit-overflow-scrolling: touch;">
+    <!-- Scrollable document content -->
+    <div class="flex-1 overflow-auto" style="-webkit-overflow-scrolling: touch;">
       <div v-if="!currentDoc" class="max-w-3xl mx-auto p-4 text-center py-12 text-gray-500">
         <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
         <p>Tous les documents ont ete signes.</p>
@@ -155,8 +156,27 @@ onMounted(async () => {
       </div>
 
       <div v-else class="max-w-3xl mx-auto p-4 space-y-4">
+        <!-- Zoom controls -->
+        <div class="flex items-center justify-end gap-1">
+          <button
+            class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+            style="background-color: #e5e7eb; color: #374151;"
+            :disabled="textZoom <= 80"
+            :style="textZoom <= 80 ? 'opacity: 0.3;' : ''"
+            @click="textZoom = Math.max(80, textZoom - 20)"
+          >A-</button>
+          <span class="text-xs text-gray-400 w-10 text-center">{{ textZoom }}%</span>
+          <button
+            class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+            style="background-color: #e5e7eb; color: #374151;"
+            :disabled="textZoom >= 180"
+            :style="textZoom >= 180 ? 'opacity: 0.3;' : ''"
+            @click="textZoom = Math.min(180, textZoom + 20)"
+          >A+</button>
+        </div>
+
         <!-- Notice sections -->
-        <div v-if="noticeSections.length > 0" class="bg-white rounded-xl shadow p-5 space-y-4">
+        <div v-if="noticeSections.length > 0" class="bg-white rounded-xl shadow p-5 space-y-4" :style="{ fontSize: textZoom + '%' }">
           <div v-for="(section, i) in noticeSections" :key="i">
             <h3 class="font-semibold text-sm mb-1.5">{{ section.title }}</h3>
             <div class="text-sm text-gray-600 leading-relaxed" :style="sectionStyle(section)" v-html="formatContent(section.content, section.align)"></div>
@@ -164,7 +184,7 @@ onMounted(async () => {
         </div>
 
         <!-- Declaration -->
-        <div class="bg-blue-50 rounded-xl shadow p-5 border border-blue-200">
+        <div class="bg-blue-50 rounded-xl shadow p-5 border border-blue-200" :style="{ fontSize: textZoom + '%' }">
           <h3 class="font-semibold text-sm mb-2 text-blue-800">Declaration</h3>
           <div class="text-sm leading-relaxed" :style="declarationStyle" v-html="formatContent(declarationText)"></div>
         </div>
