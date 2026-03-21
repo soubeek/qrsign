@@ -67,7 +67,27 @@ export function useSignaturePad(canvasRef: Ref<HTMLCanvasElement | null>) {
   }
 
   function toDataURL(type = 'image/png'): string {
-    return signaturePad.value?.toDataURL(type) ?? ''
+    const canvas = canvasRef.value
+    if (!canvas || !signaturePad.value) return ''
+
+    // Always export at a fixed max width to keep file size consistent
+    const maxWidth = 600
+    const ratio = canvas.width / canvas.height
+    const exportWidth = Math.min(canvas.width, maxWidth)
+    const exportHeight = Math.round(exportWidth / ratio)
+
+    if (canvas.width <= maxWidth) {
+      return signaturePad.value.toDataURL(type)
+    }
+
+    // Downscale via offscreen canvas
+    const offscreen = document.createElement('canvas')
+    offscreen.width = exportWidth
+    offscreen.height = exportHeight
+    const ctx = offscreen.getContext('2d')
+    if (!ctx) return signaturePad.value.toDataURL(type)
+    ctx.drawImage(canvas, 0, 0, exportWidth, exportHeight)
+    return offscreen.toDataURL(type)
   }
 
   function isBlank(): boolean {
