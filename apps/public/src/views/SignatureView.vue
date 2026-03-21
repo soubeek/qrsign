@@ -181,7 +181,7 @@ onMounted(async () => {
           </button>
         </div>
         <div class="border-2 border-dashed border-gray-300 rounded-lg bg-white relative" style="touch-action: none;">
-          <canvas ref="canvasRef" class="w-full" style="height: 120px; display: block;" />
+          <canvas ref="canvasRef" class="w-full" style="height: 160px; display: block;" />
           <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span class="text-gray-300 text-sm">Signez ici</span>
           </div>
