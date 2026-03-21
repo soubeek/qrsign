@@ -61,23 +61,15 @@ const declarationText = computed(() => {
   return replaceVars(currentDoc.value.declarationTemplate)
 })
 
-// Convert markdown-like syntax to HTML for display
 function formatContent(text: string, align?: string): string {
   if (!text) return ''
   let html = text
-    // Escape HTML
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    // Bold: **text**
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Italic: *text*
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Bullet lists: lines starting with -
     .replace(/^- (.+)$/gm, '<li>$1</li>')
-  // Wrap consecutive <li> in <ul>
   html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul class="list-disc list-inside my-1">$1</ul>')
-  // Newlines to <br> (except inside <ul>)
   html = html.replace(/\n/g, '<br>')
-  // Clean up <br> right after <ul> or before </ul>
   html = html.replace(/<br><ul/g, '<ul').replace(/<\/ul><br>/g, '</ul>')
   return html
 }
@@ -105,14 +97,11 @@ async function confirmAndSign() {
   errorMsg.value = ''
   try {
     const result = await checkin.sign(participantId, currentDoc.value.id, toDataURL())
-    // Reload participant to get updated signatures
     await checkin.loadParticipant(participantId)
 
     if (result.allSigned) {
-      // All required documents signed → confirmation
       router.push(`/confirmation/${participantId}`)
     } else {
-      // More documents to sign — reset pad and show next
       currentDocIndex.value = 0
       clear()
       await nextTick()
@@ -130,7 +119,6 @@ onMounted(async () => {
     await checkin.loadParticipant(participantId)
   }
   if (!config.config) await config.loadConfig()
-  // If all docs already signed, go to confirmation
   if (unsignedDocs.value.length === 0 && allDocs.value.length > 0) {
     router.push(`/confirmation/${participantId}`)
   }
@@ -139,25 +127,27 @@ onMounted(async () => {
 
 <template>
   <div class="app-fixed-layout bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b p-4 z-10 shrink-0">
+    <!-- Header — fixed top -->
+    <div class="bg-white shadow-sm border-b p-3 z-10 shrink-0">
       <div class="max-w-3xl mx-auto">
         <div class="flex items-center gap-3 mb-2">
-          <Button icon="pi pi-arrow-left" severity="secondary" text @click="router.push(`/participant/${participantId}`)" />
-          <div class="flex-1">
-            <h1 class="text-lg font-bold">{{ currentDoc?.title || 'Signature' }}</h1>
-            <p v-if="participantName" class="text-sm text-gray-500">{{ participantName }}</p>
+          <button class="w-9 h-9 rounded-lg flex items-center justify-center" style="background-color: #f3f4f6;" @click="router.push(`/participant/${participantId}`)">
+            <i class="pi pi-arrow-left text-gray-600"></i>
+          </button>
+          <div class="flex-1 min-w-0">
+            <h1 class="text-base font-bold truncate">{{ currentDoc?.title || 'Signature' }}</h1>
+            <p v-if="participantName" class="text-xs text-gray-500">{{ participantName }}</p>
           </div>
-          <div class="text-right text-sm text-gray-500">
-            Document {{ signedCount + 1 }} / {{ totalDocs }}
+          <div class="text-right text-xs text-gray-400">
+            {{ signedCount + 1 }} / {{ totalDocs }}
           </div>
         </div>
-        <ProgressBar :value="progress" :showValue="false" class="h-2" />
+        <ProgressBar :value="progress" :showValue="false" class="h-1.5" />
       </div>
     </div>
 
-    <!-- Scrollable content -->
-    <div class="flex-1 overflow-y-auto pb-8" style="-webkit-overflow-scrolling: touch;">
+    <!-- Scrollable: document content only -->
+    <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
       <div v-if="!currentDoc" class="max-w-3xl mx-auto p-4 text-center py-12 text-gray-500">
         <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
         <p>Tous les documents ont ete signes.</p>
@@ -166,37 +156,46 @@ onMounted(async () => {
 
       <div v-else class="max-w-3xl mx-auto p-4 space-y-4">
         <!-- Notice sections -->
-        <div v-if="noticeSections.length > 0" class="bg-white rounded-xl shadow p-6 space-y-5">
+        <div v-if="noticeSections.length > 0" class="bg-white rounded-xl shadow p-5 space-y-4">
           <div v-for="(section, i) in noticeSections" :key="i">
-            <h3 class="font-semibold text-sm mb-2">{{ section.title }}</h3>
+            <h3 class="font-semibold text-sm mb-1.5">{{ section.title }}</h3>
             <div class="text-sm text-gray-600 leading-relaxed" :style="sectionStyle(section)" v-html="formatContent(section.content, section.align)"></div>
           </div>
         </div>
 
         <!-- Declaration -->
-        <div class="bg-blue-50 rounded-xl shadow p-6 border border-blue-200">
-          <h3 class="font-semibold text-sm mb-3 text-blue-800">Declaration</h3>
+        <div class="bg-blue-50 rounded-xl shadow p-5 border border-blue-200">
+          <h3 class="font-semibold text-sm mb-2 text-blue-800">Declaration</h3>
           <div class="text-sm leading-relaxed" :style="declarationStyle" v-html="formatContent(declarationText)"></div>
         </div>
+      </div>
+    </div>
 
-        <!-- Signature pad -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="font-semibold text-sm mb-3">{{ currentDoc?.signingLabel || 'Signer le document' }}</h3>
-          <div class="border-2 border-dashed border-gray-300 rounded-lg bg-white relative" style="touch-action: none;">
-            <canvas ref="canvasRef" class="w-full" style="height: 200px; display: block;" />
-            <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span class="text-gray-300 text-sm">Signez ici</span>
-            </div>
-          </div>
-          <div v-if="errorMsg" class="mt-3 p-2 bg-red-50 text-red-600 text-sm rounded">{{ errorMsg }}</div>
-          <div class="mt-4 flex gap-3">
-            <Button label="Effacer" icon="pi pi-trash" severity="secondary" outlined @click="clear" />
-            <Button :label="unsignedDocs.length > 1 ? (currentDoc?.signingLabel || 'Signer') + ' et suivant' : currentDoc?.signingLabel || 'Signer et terminer'"
-              icon="pi pi-check" :severity="isEmpty ? 'secondary' : 'success'" size="large"
-              :loading="isSigning" @click="requestValidation" class="flex-1" />
+    <!-- Fixed bottom: Signature pad + actions -->
+    <div v-if="currentDoc" class="shrink-0 bg-white border-t shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+      <div class="max-w-3xl mx-auto p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold text-xs text-gray-500 uppercase tracking-wide">{{ currentDoc?.signingLabel || 'Signature' }}</h3>
+          <button class="text-xs text-gray-400 flex items-center gap-1" @click="clear">
+            <i class="pi pi-trash text-[10px]"></i> Effacer
+          </button>
+        </div>
+        <div class="border-2 border-dashed border-gray-300 rounded-lg bg-white relative" style="touch-action: none;">
+          <canvas ref="canvasRef" class="w-full" style="height: 120px; display: block;" />
+          <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span class="text-gray-300 text-sm">Signez ici</span>
           </div>
         </div>
-        <div class="h-4"></div>
+        <div v-if="errorMsg" class="mt-2 p-2 bg-red-50 text-red-600 text-xs rounded">{{ errorMsg }}</div>
+        <button
+          class="w-full mt-2 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+          :style="isEmpty ? 'background-color: #e5e7eb; color: #9ca3af;' : 'background-color: #16a34a; color: white;'"
+          :disabled="isSigning"
+          @click="requestValidation"
+        >
+          <i :class="isSigning ? 'pi pi-spin pi-spinner' : 'pi pi-check'"></i>
+          {{ unsignedDocs.length > 1 ? 'Signer et suivant' : 'Signer et terminer' }}
+        </button>
       </div>
     </div>
 
