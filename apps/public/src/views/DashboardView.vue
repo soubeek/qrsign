@@ -5,7 +5,6 @@ import { useConfigStore } from '@/stores/config.store'
 import { useCheckinStore, type ParticipantStatus } from '@/stores/checkin.store'
 import { useAuthStore } from '@/stores/auth.store'
 import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import ProgressBar from 'primevue/progressbar'
 
@@ -14,18 +13,8 @@ const configStore = useConfigStore()
 const checkinStore = useCheckinStore()
 const auth = useAuthStore()
 
-interface StatsData {
-  total: number
-  present: number
-  signed: number
-  absent: number
-}
-
-interface ParticipantRow {
-  id: string
-  status: ParticipantStatus
-  data: Record<string, unknown>
-}
+interface StatsData { total: number; present: number; signed: number; absent: number }
+interface ParticipantRow { id: string; status: ParticipantStatus; data: Record<string, unknown> }
 
 const stats = ref<StatsData>({ total: 0, present: 0, signed: 0, absent: 0 })
 const participants = ref<ParticipantRow[]>([])
@@ -68,7 +57,7 @@ function statusLabel(status: ParticipantStatus): string {
   switch (status) {
     case 'ABSENT': return 'Absent'
     case 'PRESENT': return 'Present'
-    case 'SIGNED': return 'Present + Signe'
+    case 'SIGNED': return 'Signe'
   }
 }
 
@@ -84,185 +73,154 @@ async function loadData() {
     ])
     stats.value = s
     participants.value = p.participants ?? p.data ?? p
-  } catch {
-    // silently fail on refresh
-  }
+  } catch {}
 }
 
 async function searchParticipants() {
   isLoadingList.value = true
   try {
-    const p = await checkinStore.getParticipants({
-      search: searchQuery.value || undefined, limit: 500,
-    })
+    const p = await checkinStore.getParticipants({ search: searchQuery.value || undefined, limit: 500 })
     participants.value = p.participants ?? p.data ?? p
     currentPage.value = 1
-  } finally {
-    isLoadingList.value = false
-  }
+  } finally { isLoadingList.value = false }
 }
 
-function goToParticipant(id: string) {
-  router.push(`/participant/${id}`)
-}
+function goToParticipant(id: string) { router.push(`/participant/${id}`) }
 
-function goToScanner() {
-  router.push('/scanner')
-}
-
-async function handleLogout() {
-  await auth.logout()
-  router.push('/login')
-}
+async function handleLogout() { await auth.logout(); router.push('/login') }
 
 onMounted(async () => {
-  if (!configStore.config) {
-    await configStore.loadConfig()
-  }
+  if (!configStore.config) await configStore.loadConfig()
   await loadData()
   refreshInterval = setInterval(loadData, 30000)
 })
-
-onUnmounted(() => {
-  if (refreshInterval) clearInterval(refreshInterval)
-})
+onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800">
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-xl font-bold text-gray-800 truncate">
             {{ configStore.config?.app?.emoji }} {{ configStore.config?.app?.title ?? 'CheckFlow' }}
           </h1>
-          <p class="text-sm text-gray-500">{{ configStore.config?.app?.subtitle }}</p>
         </div>
-        <div class="flex gap-2">
-          <Button
-            icon="pi pi-qrcode"
-            label="Scanner"
-            severity="primary"
-            @click="goToScanner"
-          />
-          <Button
-            icon="pi pi-sign-out"
-            severity="secondary"
-            text
-            @click="handleLogout"
-          />
-        </div>
+        <button
+          class="text-gray-400 hover:text-gray-600 p-2"
+          @click="handleLogout"
+          title="Deconnexion"
+        >
+          <i class="pi pi-sign-out text-lg"></i>
+        </button>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-6">
+    <main class="max-w-7xl mx-auto px-3 py-4 flex flex-col gap-4">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <div class="text-sm text-gray-500">Total</div>
-          <div class="text-3xl font-bold text-gray-800 mt-1">{{ stats.total }}</div>
+      <div class="grid grid-cols-4 gap-2 sm:gap-4">
+        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border border-gray-100 text-center">
+          <div class="text-[10px] sm:text-sm text-gray-500 uppercase tracking-wide">Total</div>
+          <div class="text-2xl sm:text-3xl font-bold text-gray-800">{{ stats.total }}</div>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-orange-400">
-          <div class="text-sm text-orange-600">Presents</div>
-          <div class="text-3xl font-bold text-orange-700 mt-1">{{ stats.present }}</div>
+        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border-l-4 border-orange-400 text-center">
+          <div class="text-[10px] sm:text-sm text-orange-600 uppercase tracking-wide">Presents</div>
+          <div class="text-2xl sm:text-3xl font-bold text-orange-700">{{ stats.present }}</div>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-green-500">
-          <div class="text-sm text-green-600">Signes</div>
-          <div class="text-3xl font-bold text-green-700 mt-1">{{ stats.signed }}</div>
+        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border-l-4 border-green-500 text-center">
+          <div class="text-[10px] sm:text-sm text-green-600 uppercase tracking-wide">Signes</div>
+          <div class="text-2xl sm:text-3xl font-bold text-green-700">{{ stats.signed }}</div>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-red-400">
-          <div class="text-sm text-red-600">Absents</div>
-          <div class="text-3xl font-bold text-red-700 mt-1">{{ stats.absent }}</div>
+        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-sm border-l-4 border-red-400 text-center">
+          <div class="text-[10px] sm:text-sm text-red-600 uppercase tracking-wide">Absents</div>
+          <div class="text-2xl sm:text-3xl font-bold text-red-700">{{ stats.absent }}</div>
         </div>
       </div>
 
       <!-- Progress -->
-      <div class="bg-white rounded-xl p-5 shadow-sm">
+      <div class="bg-white rounded-xl p-4 shadow-sm">
         <div class="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Progression des signatures</span>
+          <span>Signatures</span>
           <span class="font-semibold">{{ signProgress }}%</span>
         </div>
-        <ProgressBar :value="signProgress" :showValue="false" class="h-3" />
+        <ProgressBar :value="signProgress" :showValue="false" class="h-2" />
       </div>
 
       <!-- Participant List -->
       <div class="bg-white rounded-xl shadow-sm">
-        <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
-          <div class="flex-1">
-            <InputText
-              v-model="searchQuery"
-              placeholder="Rechercher un participant..."
-              class="w-full"
-              @input="searchParticipants"
-            />
-          </div>
+        <div class="p-3 border-b border-gray-100">
+          <InputText
+            v-model="searchQuery"
+            placeholder="Rechercher..."
+            class="w-full"
+            @input="searchParticipants"
+          />
         </div>
 
-        <div class="px-4 pt-2">
-          <div class="flex gap-2 pb-2">
+        <!-- Filter tabs -->
+        <div class="px-3 pt-2 overflow-x-auto">
+          <div class="flex gap-1.5 pb-2 min-w-max">
             <button v-for="tab in [
               {v:'all',l:'Tous',c:participants.length},
               {v:'absent',l:'Absents',c:participants.filter(p=>p.status==='ABSENT').length},
               {v:'present',l:'Presents',c:participants.filter(p=>p.status==='PRESENT'||p.status==='SIGNED').length},
               {v:'signed',l:'Signes',c:participants.filter(p=>p.status==='SIGNED').length}
             ]" :key="tab.v"
-              class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-              :class="activeTab === tab.v ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+              class="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
+              :class="activeTab === tab.v ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 active:bg-gray-200'"
               @click="activeTab = tab.v; currentPage = 1"
             >{{ tab.l }} ({{ tab.c }})</button>
           </div>
         </div>
 
+        <!-- List -->
         <div class="divide-y divide-gray-100">
-          <div
+          <button
             v-for="p in paginatedParticipants"
             :key="p.id"
-            class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition-colors"
+            class="w-full px-4 py-3.5 flex items-center gap-3 active:bg-gray-50 text-left transition-colors"
             @click="goToParticipant(p.id)"
           >
-            <div class="flex-1 flex items-center gap-3">
-              <div
-                v-for="field in configStore.listFields"
-                :key="field.key"
-                class="text-sm text-gray-700"
-              >
-                <span class="font-medium" v-if="field.key === 'nom'">
-                  {{ getFieldValue(p, field.key) }}
-                </span>
-                <span v-else>{{ getFieldValue(p, field.key) }}</span>
+            <!-- Status dot -->
+            <div class="w-3 h-3 rounded-full shrink-0"
+              :class="{
+                'bg-red-400': p.status === 'ABSENT',
+                'bg-orange-400': p.status === 'PRESENT',
+                'bg-green-500': p.status === 'SIGNED',
+              }"
+            ></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span v-for="field in configStore.listFields" :key="field.key"
+                  class="text-sm"
+                  :class="field.key === 'nom' ? 'font-semibold text-gray-800' : 'text-gray-500'"
+                >{{ getFieldValue(p, field.key) }}</span>
               </div>
             </div>
             <Tag
               :value="statusLabel(p.status)"
               :severity="statusSeverity(p.status)"
+              class="text-xs shrink-0"
             />
-            <i class="pi pi-chevron-right text-gray-400 text-sm" />
-          </div>
+            <i class="pi pi-chevron-right text-gray-300 text-xs shrink-0" />
+          </button>
 
-          <div
-            v-if="filteredParticipants.length === 0"
-            class="px-4 py-12 text-center text-gray-400"
-          >
+          <div v-if="filteredParticipants.length === 0" class="px-4 py-12 text-center text-gray-400">
             Aucun participant trouve
           </div>
         </div>
 
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="px-4 py-3 border-t flex items-center justify-between text-sm">
-          <span class="text-gray-500">
-            {{ (currentPage - 1) * perPage + 1 }}-{{ Math.min(currentPage * perPage, filteredParticipants.length) }} sur {{ filteredParticipants.length }}
+          <span class="text-gray-500 text-xs">
+            {{ (currentPage - 1) * perPage + 1 }}-{{ Math.min(currentPage * perPage, filteredParticipants.length) }} / {{ filteredParticipants.length }}
           </span>
           <div class="flex gap-1">
-            <button class="px-3 py-1 rounded border border-gray-200 hover:bg-gray-100 disabled:opacity-30" :disabled="currentPage <= 1" @click="currentPage--">
+            <button class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center active:bg-gray-100 disabled:opacity-30" :disabled="currentPage <= 1" @click="currentPage--">
               <i class="pi pi-chevron-left text-xs"></i>
             </button>
-            <button v-for="p in totalPages" :key="p"
-              class="px-3 py-1 rounded border text-xs"
-              :class="currentPage === p ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 hover:bg-gray-100'"
-              @click="currentPage = p"
-            >{{ p }}</button>
-            <button class="px-3 py-1 rounded border border-gray-200 hover:bg-gray-100 disabled:opacity-30" :disabled="currentPage >= totalPages" @click="currentPage++">
+            <button class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center active:bg-gray-100 disabled:opacity-30" :disabled="currentPage >= totalPages" @click="currentPage++">
               <i class="pi pi-chevron-right text-xs"></i>
             </button>
           </div>
