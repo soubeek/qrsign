@@ -59,6 +59,13 @@ async function toggleFullscreen() {
 }
 
 onMounted(() => {
+  // Prevent iOS Safari bounce/overscroll on body
+  document.body.addEventListener('touchmove', (e) => {
+    if (e.target === document.body || e.target === document.documentElement) {
+      e.preventDefault()
+    }
+  }, { passive: false })
+
   // Fullscreen tracking
   document.addEventListener('fullscreenchange', () => {
     isFullscreen.value = !!document.fullscreenElement
@@ -99,8 +106,8 @@ onMounted(() => {
     </div>
   </Transition>
 
-  <!-- Main content with bottom padding when nav is visible -->
-  <div :class="showBottomNav ? 'pb-[4.5rem]' : ''">
+  <!-- Main content — fills viewport, no scroll -->
+  <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden;" :style="showBottomNav ? 'padding-bottom: 4.5rem;' : ''">
     <RouterView />
   </div>
 
