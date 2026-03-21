@@ -111,11 +111,13 @@ onMounted(async () => {
             <!-- Status toggle -->
             <div class="flex gap-2">
               <button v-if="participant.status === 'ABSENT'"
-                class="flex-1 py-2.5 rounded-lg bg-green-600 text-white font-medium text-sm active:bg-green-700 flex items-center justify-center gap-2"
+                class="flex-1 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+                style="background-color: #16a34a; color: white;"
                 @click="changeStatus('PRESENT')"
               ><i class="pi pi-check"></i> Marquer present</button>
               <button v-if="participant.status === 'PRESENT' && !allSigned"
-                class="flex-1 py-2.5 rounded-lg bg-gray-100 text-gray-600 font-medium text-sm active:bg-gray-200 flex items-center justify-center gap-2"
+                class="flex-1 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+                style="background-color: #f3f4f6; color: #4b5563;"
                 @click="changeStatus('ABSENT')"
               ><i class="pi pi-times"></i> Marquer absent</button>
             </div>
@@ -151,12 +153,13 @@ onMounted(async () => {
 
           <!-- Sign button -->
           <button v-if="!allSigned"
-            class="w-full mt-3 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-base active:bg-blue-700 flex items-center justify-center gap-2 shadow-md"
+            class="w-full mt-3 py-3.5 rounded-xl font-semibold text-base flex items-center justify-center gap-2 shadow-md"
+            style="background-color: #2563eb; color: white;"
             @click="router.push(`/signature/${participantId}`)"
           >
             <i class="pi pi-pencil"></i>
             {{ allDocs.find(d => !signedDocIds.includes(d.id))?.signingLabel || 'Signer' }}
-            <span class="bg-white/20 px-2 py-0.5 rounded text-xs ml-1">{{ totalDocs - signedCount }} restant{{ totalDocs - signedCount > 1 ? 's' : '' }}</span>
+            <span style="background-color: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 4px;">{{ totalDocs - signedCount }} restant{{ totalDocs - signedCount > 1 ? 's' : '' }}</span>
           </button>
 
           <!-- Email button -->
@@ -188,7 +191,8 @@ onMounted(async () => {
         </div>
 
         <button
-          class="w-full mt-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium text-sm active:bg-gray-900 flex items-center justify-center gap-2 disabled:opacity-50"
+          class="w-full mt-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          style="background-color: #1f2937; color: white;"
           :disabled="isSaving"
           @click="save"
         >

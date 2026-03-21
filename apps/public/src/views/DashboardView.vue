@@ -168,7 +168,7 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
               {v:'signed',l:'Signes',c:participants.filter(p=>p.status==='SIGNED').length}
             ]" :key="tab.v"
               class="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
-              :class="activeTab === tab.v ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 active:bg-gray-200'"
+              :style="activeTab === tab.v ? 'background-color:#2563eb;color:white;' : 'background-color:#f3f4f6;color:#4b5563;'"
               @click="activeTab = tab.v; currentPage = 1"
             >{{ tab.l }} ({{ tab.c }})</button>
           </div>
