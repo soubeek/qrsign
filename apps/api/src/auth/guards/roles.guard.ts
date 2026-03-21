@@ -38,10 +38,12 @@ export class RolesGuard implements CanActivate {
     // SUPER_ADMIN bypasses all
     if (user.role === 'SUPER_ADMIN') return true;
 
-    // Check if user's role is in the required roles
-    if (requiredRoles.includes(user.role)) return true;
+    // Check if user's global role meets the minimum required (hierarchy)
+    const userLevel = ROLE_HIERARCHY[user.role] || 0;
+    const minRequired = Math.min(...requiredRoles.map(r => ROLE_HIERARCHY[r] || 0));
+    if (userLevel >= minRequired) return true;
 
-    // Check event-specific role
+    // Check event-specific role (hierarchy-based)
     const slug = request.params?.slug;
     if (slug) {
       const event = await this.prisma.event.findUnique({ where: { slug } });
@@ -49,8 +51,9 @@ export class RolesGuard implements CanActivate {
         const userEvent = await this.prisma.userEvent.findUnique({
           where: { userId_eventId: { userId: user.id, eventId: event.id } },
         });
-        if (userEvent?.eventRole && requiredRoles.includes(userEvent.eventRole)) {
-          return true;
+        if (userEvent?.eventRole) {
+          const eventLevel = ROLE_HIERARCHY[userEvent.eventRole] || 0;
+          if (eventLevel >= minRequired) return true;
         }
       }
     }
