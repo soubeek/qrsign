@@ -175,18 +175,21 @@ onMounted(async () => {
           >A+</button>
         </div>
 
-        <!-- Notice sections -->
-        <div v-if="noticeSections.length > 0" class="bg-white rounded-xl shadow p-5 space-y-4" :style="{ fontSize: textZoom + '%' }">
-          <div v-for="(section, i) in noticeSections" :key="i">
-            <h3 class="font-semibold text-sm mb-1.5">{{ section.title }}</h3>
-            <div class="text-sm text-gray-600 leading-relaxed" :style="sectionStyle(section)" v-html="formatContent(section.content, section.align)"></div>
+        <!-- Zoomable document content -->
+        <div :style="{ transform: 'scale(' + textZoom / 100 + ')', transformOrigin: 'top left', width: (10000 / textZoom) + '%' }" class="space-y-4">
+          <!-- Notice sections -->
+          <div v-if="noticeSections.length > 0" class="bg-white rounded-xl shadow p-5 space-y-4">
+            <div v-for="(section, i) in noticeSections" :key="i">
+              <h3 class="font-semibold text-sm mb-1.5">{{ section.title }}</h3>
+              <div class="text-sm text-gray-600 leading-relaxed" :style="sectionStyle(section)" v-html="formatContent(section.content, section.align)"></div>
+            </div>
           </div>
-        </div>
 
-        <!-- Declaration -->
-        <div class="bg-blue-50 rounded-xl shadow p-5 border border-blue-200" :style="{ fontSize: textZoom + '%' }">
-          <h3 class="font-semibold text-sm mb-2 text-blue-800">Declaration</h3>
-          <div class="text-sm leading-relaxed" :style="declarationStyle" v-html="formatContent(declarationText)"></div>
+          <!-- Declaration -->
+          <div class="bg-blue-50 rounded-xl shadow p-5 border border-blue-200">
+            <h3 class="font-semibold text-sm mb-2 text-blue-800">Declaration</h3>
+            <div class="text-sm leading-relaxed" :style="declarationStyle" v-html="formatContent(declarationText)"></div>
+          </div>
         </div>
       </div>
     </div>
