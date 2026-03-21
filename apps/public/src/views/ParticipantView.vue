@@ -85,9 +85,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b sticky top-0 z-20">
+  <div class="h-screen flex flex-col bg-gray-50">
+    <!-- Fixed top: Header + Tabs -->
+    <header class="bg-white shadow-sm border-b z-20 shrink-0">
       <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
         <button class="w-9 h-9 rounded-lg flex items-center justify-center" style="background-color: #f3f4f6;" @click="router.push('/scanner')">
           <i class="pi pi-arrow-left text-gray-600"></i>
@@ -113,13 +113,13 @@ onMounted(async () => {
       </div>
     </header>
 
-    <div v-if="checkin.isLoading" class="text-center py-12 text-gray-500">
+    <div v-if="checkin.isLoading" class="flex-1 flex items-center justify-center text-gray-500">
       <i class="pi pi-spin pi-spinner text-2xl"></i>
     </div>
 
-    <div v-else-if="participant" class="max-w-2xl mx-auto">
-      <!-- Tabs -->
-      <div class="flex border-b bg-white sticky top-[57px] z-10">
+    <template v-else-if="participant">
+      <!-- Tabs — fixed below header -->
+      <div class="flex border-b bg-white z-10 shrink-0 max-w-2xl mx-auto w-full">
         <button
           class="flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors"
           :style="activeTab === 'infos' ? 'border-color: #2563eb; color: #2563eb;' : 'border-color: transparent; color: #9ca3af;'"
@@ -142,8 +142,11 @@ onMounted(async () => {
         </button>
       </div>
 
+      <!-- Scrollable content -->
+      <div class="flex-1 overflow-y-auto">
+
       <!-- Tab: Documents -->
-      <div v-if="activeTab === 'documents'" class="px-3 py-4 space-y-3">
+      <div v-if="activeTab === 'documents'" class="max-w-2xl mx-auto px-3 py-4 space-y-3">
         <div v-if="totalDocs === 0" class="bg-white rounded-xl shadow-sm p-8 text-center text-gray-400">
           <i class="pi pi-file text-3xl mb-3"></i>
           <p>Aucun document a signer pour cet evenement.</p>
@@ -204,7 +207,7 @@ onMounted(async () => {
       </div>
 
       <!-- Tab: Informations -->
-      <div v-if="activeTab === 'infos'" class="px-3 py-4 space-y-3">
+      <div v-if="activeTab === 'infos'" class="max-w-2xl mx-auto px-3 py-4 space-y-3">
         <!-- QR Code -->
         <div v-if="qrCodeUrl" class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
           <img :src="qrCodeUrl" alt="QR" class="w-20 h-20 rounded border border-gray-200" />
@@ -244,9 +247,11 @@ onMounted(async () => {
       </div>
 
       <!-- Save feedback (visible on both tabs) -->
-      <div v-if="saveMessage" class="mx-3 mb-3 p-3 rounded-lg text-sm text-center"
+      <div v-if="saveMessage" class="max-w-2xl mx-auto mx-3 mb-3 p-3 rounded-lg text-sm text-center"
         :class="saveMessage.includes('Erreur') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'"
       >{{ saveMessage }}</div>
-    </div>
+
+      </div><!-- end scrollable -->
+    </template>
   </div>
 </template>
