@@ -142,8 +142,8 @@ onMounted(async () => {
         </button>
       </div>
 
-      <!-- Scrollable content -->
-      <div class="flex-1 overflow-y-auto">
+      <!-- Scrollable content — pb-20 for bottom nav clearance -->
+      <div class="flex-1 overflow-y-auto pb-20">
 
       <!-- Tab: Documents -->
       <div v-if="activeTab === 'documents'" class="max-w-2xl mx-auto px-3 py-4 space-y-3">
