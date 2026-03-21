@@ -473,6 +473,14 @@ watch(hasChanges, v => {
               <div><label class="text-sm font-medium">Largeur signature (mm)</label><InputText v-model.number="doc.signatureWidthMm" type="number" class="w-full mt-1" /></div>
               <div><label class="text-sm font-medium">Hauteur signature (mm)</label><InputText v-model.number="doc.signatureHeightMm" type="number" class="w-full mt-1" /></div>
             </div>
+            <div>
+              <label class="text-sm font-medium">Position de la signature</label>
+              <select v-model="doc.signaturePosition" class="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                <option value="left">Gauche</option>
+                <option value="center">Centre</option>
+                <option value="right">Droite</option>
+              </select>
+            </div>
           </div>
         </div>
 

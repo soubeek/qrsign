@@ -84,7 +84,7 @@ export class EventsService {
           eventId: newEvent.id, title: d.title, signingLabel: d.signingLabel,
           declarationTemplate: d.declarationTemplate, declarationAlign: d.declarationAlign,
           noticeSections: d.noticeSections as any, pdfFooterText: d.pdfFooterText,
-          signatureWidthMm: d.signatureWidthMm, signatureHeightMm: d.signatureHeightMm,
+          signatureWidthMm: d.signatureWidthMm, signatureHeightMm: d.signatureHeightMm, signaturePosition: d.signaturePosition,
           logoPosition: d.logoPosition, titlePosition: d.titlePosition,
           displayOrder: d.displayOrder, required: d.required,
         },

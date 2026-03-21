@@ -78,6 +78,7 @@ export interface DocumentDef {
   pdfFooterText: string
   signatureWidthMm: number
   signatureHeightMm: number
+  signaturePosition: string
 }
 
 export interface NoticeSection {

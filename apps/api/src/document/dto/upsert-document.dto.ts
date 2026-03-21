@@ -9,6 +9,7 @@ export class UpsertDocumentDto {
   @IsString() @IsOptional() pdfFooterText?: string;
   @IsInt() @IsOptional() signatureWidthMm?: number;
   @IsInt() @IsOptional() signatureHeightMm?: number;
+  @IsString() @IsOptional() signaturePosition?: string;
   @IsString() @IsOptional() logoPosition?: string;
   @IsString() @IsOptional() titlePosition?: string;
   @IsInt() @IsOptional() displayOrder?: number;

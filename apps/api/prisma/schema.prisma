@@ -122,6 +122,7 @@ model DocumentDef {
   pdfFooterText       String @default("") @map("pdf_footer_text")
   signatureWidthMm    Int    @default(75)  @map("signature_width_mm")
   signatureHeightMm   Int    @default(28)  @map("signature_height_mm")
+  signaturePosition   String @default("left") @map("signature_position")
   logoPath            String? @map("logo_path")
   logoPosition        String  @default("center") @map("logo_position")
   titlePosition       String  @default("center") @map("title_position")

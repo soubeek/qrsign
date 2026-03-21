@@ -22,6 +22,7 @@ export class PdfGenerator {
       pdfFooterText: string;
       signatureWidthMm: number;
       signatureHeightMm: number;
+      signaturePosition?: string;
       logoPath?: string | null;
       logoPosition?: string;
       backgroundPath?: string | null;
@@ -275,9 +276,13 @@ export class PdfGenerator {
         const sigImage = await doc.embedPng(sigBytes);
         const sigWidth = (documentDef.signatureWidthMm / 25.4) * 72;
         const sigHeight = (documentDef.signatureHeightMm / 25.4) * 72;
+        const pos = documentDef.signaturePosition || 'left';
+        let sigX = margin;
+        if (pos === 'center') sigX = (width - sigWidth) / 2;
+        else if (pos === 'right') sigX = width - margin - sigWidth;
         addNewPageIfNeeded(sigHeight + 12);
         page.drawImage(sigImage, {
-          x: margin,
+          x: sigX,
           y: y - sigHeight,
           width: sigWidth,
           height: sigHeight,
